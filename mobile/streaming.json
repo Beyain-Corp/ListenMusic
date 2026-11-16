@@ -1,4 +1,4 @@
 {
-  "clients": ["VISIONOS"],
+  "clients": ["VISIONOS", "IOS"],
   "ios": ["IOS", "VISIONOS"]
 }

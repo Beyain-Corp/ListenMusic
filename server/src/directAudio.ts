@@ -12,7 +12,7 @@ import { text, withClient } from "./search.js";
  * (mobile/streaming.json in the repository) without shipping a new version.
  */
 
-export const DEFAULT_CLIENTS = ["VISIONOS"];
+export const DEFAULT_CLIENTS = ["VISIONOS", "IOS"];
 export const DEFAULT_REMOTE_CONFIG = "https://raw.githubusercontent.com/Beyain-Corp/ListenMusic/main/mobile/streaming.json";
 export const LEGACY_REMOTE_CONFIG = "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json";
 
