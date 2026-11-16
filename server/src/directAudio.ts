@@ -13,8 +13,8 @@ import { text, withClient } from "./search.js";
  */
 
 export const DEFAULT_CLIENTS = ["VISIONOS"];
-export const DEFAULT_REMOTE_CONFIG = "https://raw.githubusercontent.com/Ernani1234/listenmusic/main/mobile/streaming.json";
-export const LEGACY_REMOTE_CONFIG = "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json";
+export const DEFAULT_REMOTE_CONFIG = "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json";
+export const LEGACY_REMOTE_CONFIG = "https://raw.githubusercontent.com/MusicPlay/musike/main/mobile/streaming.json";
 
 export interface DirectAudio {
   url: string;

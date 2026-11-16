@@ -21,6 +21,6 @@ export const config = {
   authToken: null,
   streamingUrl:
     (typeof localStorage !== "undefined" && (localStorage.getItem("listenmusic:streaming-url") || localStorage.getItem("musike:streaming-url"))) ||
-    "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json",
+    "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json",
   fetch: Capacitor.isNativePlatform() ? nativeFetch : devTransport ? makeFetch(devTransport) : undefined,
 };

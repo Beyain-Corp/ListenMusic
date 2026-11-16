@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 #
 # ListenMusic server + web app in one image. The music library lives in /data, the HD video cache in /cache.
-#   docker run -d -p 4180:4180 -v listenmusic-data:/data -v listenmusic-cache:/cache ghcr.io/ernani1234/listenmusic
+#   docker run -d -p 4180:4180 -v listenmusic-data:/data -v listenmusic-cache:/cache ghcr.io/musicplay/listenmusic
 #
 # Multi-arch (amd64, arm64): the JavaScript is built once on the build machine, only the tools differ.
 

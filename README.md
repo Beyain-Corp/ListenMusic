@@ -18,7 +18,7 @@ Runs as a **Windows**, **macOS** and **Linux** app, as an **Android**, **Android
 
 <img src="docs/screenshots/home.jpg" alt="ListenMusic playing Radiohead, with playlists, recently played and the Now Playing panel" width="900" />
 
-**[Download for Windows, macOS, Linux, Android and iPhone](https://github.com/Ernani1234/listenmusic/releases/latest)** · [Run with Docker](#option-6-docker) · [Run from source](#option-7-node-server--browser)
+**[Download for Windows, macOS, Linux, Android and iPhone](https://github.com/MusicPlay/listenmusic/releases/latest)** · [Run with Docker](#option-6-docker) · [Run from source](#option-7-node-server--browser)
 
 </div>
 
@@ -157,7 +157,7 @@ flowchart LR
 
 ### Option 1: Windows app
 
-Download `ListenMusic-Setup-<version>-Windows.exe` from the [latest release](https://github.com/Ernani1234/listenmusic/releases/latest) and run it. The installer:
+Download `ListenMusic-Setup-<version>-Windows.exe` from the [latest release](https://github.com/MusicPlay/listenmusic/releases/latest) and run it. The installer:
 
 - installs for the current user only (no administrator needed) and lets you pick the folder;
 - creates **ListenMusic** shortcuts on the desktop and in the Start menu, and opens the app when it's done;
@@ -180,7 +180,7 @@ To build the installer yourself: `pnpm install && pnpm installer` (creates `rele
 
 ### Option 2: macOS app
 
-Download the `.dmg` for your Mac from the [latest release](https://github.com/Ernani1234/listenmusic/releases/latest): `ListenMusic-Setup-<version>-macOS-arm64.dmg` for Apple Silicon (M1 and newer) or `ListenMusic-Setup-<version>-macOS-x64.dmg` for Intel. Open it and drag **ListenMusic** to **Applications**. Requires macOS 12 or newer.
+Download the `.dmg` for your Mac from the [latest release](https://github.com/MusicPlay/listenmusic/releases/latest): `ListenMusic-Setup-<version>-macOS-arm64.dmg` for Apple Silicon (M1 and newer) or `ListenMusic-Setup-<version>-macOS-x64.dmg` for Intel. Open it and drag **ListenMusic** to **Applications**. Requires macOS 12 or newer.
 
 The app isn't notarized by Apple yet, so macOS blocks the first launch:
 
@@ -199,7 +199,7 @@ To build it yourself on a Mac: `pnpm install && pnpm --filter listenmusic-deskto
 
 ### Option 3: Linux app
 
-From the [latest release](https://github.com/Ernani1234/listenmusic/releases/latest), pick the package for your system: `x64` for most PCs, `arm64` for ARM computers such as a Raspberry Pi 4 or 5 running a 64-bit desktop.
+From the [latest release](https://github.com/MusicPlay/listenmusic/releases/latest), pick the package for your system: `x64` for most PCs, `arm64` for ARM computers such as a Raspberry Pi 4 or 5 running a 64-bit desktop.
 
 - **Debian, Ubuntu, Linux Mint, Pop!_OS:** `ListenMusic-Setup-<version>-Linux-x64.deb`. Open it with the software installer, or run `sudo apt install ./ListenMusic-Setup-<version>-Linux-x64.deb`. ListenMusic appears in the applications menu.
 - **Any other distribution:** `ListenMusic-Setup-<version>-Linux-x64.AppImage`. Make it executable and run it: `chmod +x ListenMusic-*.AppImage && ./ListenMusic-*.AppImage`.
@@ -212,7 +212,7 @@ To build it yourself on Linux: `pnpm install && pnpm --filter listenmusic-deskto
 
 ### Option 4: Android app
 
-On the phone, download `ListenMusic-Setup-<version>-Android.apk` from the [latest release](https://github.com/Ernani1234/listenmusic/releases/latest) and open it. Android asks to allow installing apps from your browser (or Files): allow it, then tap **Install**. If Play Protect warns about an unknown app, tap **More details > Install anyway**. Requires Android 7.0 or newer.
+On the phone, download `ListenMusic-Setup-<version>-Android.apk` from the [latest release](https://github.com/MusicPlay/listenmusic/releases/latest) and open it. Android asks to allow installing apps from your browser (or Files): allow it, then tap **Install**. If Play Protect warns about an unknown app, tap **More details > Install anyway**. Requires Android 7.0 or newer.
 
 - It works on its own: no computer and no ListenMusic server needed, only an internet connection.
 - Your playlists and favorites live on the phone. To move them to or from a computer, use [backup to a file](#moving-your-library-backup) (on Android, Export opens the share sheet: save to Files or Drive, or send it to yourself).
@@ -224,7 +224,7 @@ To build the APK yourself you need JDK 21 and the Android SDK (Android Studio in
 
 ### Option 5: iPhone app
 
-Download `ListenMusic-Setup-<version>-iOS.ipa` from the [latest release](https://github.com/Ernani1234/listenmusic/releases/latest). Apple only lets App Store apps install directly, so the file comes unsigned and is signed with your own Apple ID as you install it, using one of these free tools:
+Download `ListenMusic-Setup-<version>-iOS.ipa` from the [latest release](https://github.com/MusicPlay/listenmusic/releases/latest). Apple only lets App Store apps install directly, so the file comes unsigned and is signed with your own Apple ID as you install it, using one of these free tools:
 
 - **AltStore** or **SideStore:** install the store on the iPhone, then open the `.ipa` with it.
 - **Sideloadly:** on a Windows or Mac computer, connect the iPhone and drag the `.ipa` into it. Then trust your Apple ID in **Settings > General > VPN & Device Management**.
@@ -243,7 +243,7 @@ For a home server, NAS or Raspberry Pi. The image (amd64 and arm64) includes yt-
 # docker-compose.yml
 services:
   listenmusic:
-    image: ghcr.io/ernani1234/listenmusic:latest
+    image: ghcr.io/musicplay/listenmusic:latest
     ports:
       - "4180:4180"
     volumes:
@@ -259,7 +259,7 @@ volumes:
 docker compose up -d   # then open http://<that machine>:4180
 ```
 
-Or with plain Docker: `docker run -d -p 4180:4180 -v listenmusic-data:/data -v listenmusic-cache:/cache ghcr.io/ernani1234/listenmusic`. To build the image from source instead: `docker build -t listenmusic .`
+Or with plain Docker: `docker run -d -p 4180:4180 -v listenmusic-data:/data -v listenmusic-cache:/cache ghcr.io/musicplay/listenmusic`. To build the image from source instead: `docker build -t listenmusic .`
 
 - A new image is published for every release; `docker compose pull && docker compose up -d` updates it. The library stays in the `/data` volume.
 - yt-dlp can also be updated from **Settings** without a new image (until the container is recreated).
@@ -472,7 +472,7 @@ iOS limits background playback for PWAs; Audio mode works better than Video.
 - [ ] Video mode on Android
 - [ ] Automatic updates for the desktop app
 
-Ideas and bug reports are welcome in [Issues](https://github.com/Ernani1234/listenmusic/issues).
+Ideas and bug reports are welcome in [Issues](https://github.com/MusicPlay/listenmusic/issues).
 
 ## Legal notice
 
@@ -480,5 +480,4 @@ ListenMusic is a project for **personal and educational use**. Playing YouTube c
 
 ## License
 
-[MIT](LICENSE) © 2026 Ernani Neto
-# ListenMusic
+[MIT](LICENSE) © 2026 MusicPlay

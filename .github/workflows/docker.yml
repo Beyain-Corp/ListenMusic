@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Registry names must be lowercase (the owner here is "Ernani1234").
+      # Registry names must be lowercase (e.g. "musicplay").
       - name: Image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 

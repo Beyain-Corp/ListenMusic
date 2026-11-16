@@ -1,7 +1,7 @@
 # ListenMusic on any machine with Docker: docker compose up -d, then open http://<this machine>:4180
 services:
   listenmusic:
-    image: ghcr.io/ernani1234/listenmusic:latest
+    image: ghcr.io/musicplay/listenmusic:latest
     # Or build it from this folder instead:
     # build: .
     container_name: listenmusic

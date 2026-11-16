@@ -4,7 +4,7 @@
   "version": "1.5.1",
   "description": "Your music, uninterrupted.",
   "author": "ListenMusic",
-  "homepage": "https://github.com/Ernani1234/listenmusic",
+  "homepage": "https://github.com/MusicPlay/listenmusic",
   "desktopName": "listenmusic.desktop",
   "private": true,
   "main": "dist/main.mjs",
@@ -90,7 +90,7 @@
       "category": "AudioVideo",
       "synopsis": "Your music, uninterrupted.",
       "description": "A personal music player for YouTube's catalog: songs and music videos, with no ads and no account.",
-      "maintainer": "ListenMusic <https://github.com/Ernani1234/listenmusic>"
+      "maintainer": "ListenMusic <https://github.com/MusicPlay/listenmusic>"
     },
     "deb": {
       "packageName": "listenmusic"

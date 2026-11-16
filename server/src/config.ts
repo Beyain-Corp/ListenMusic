@@ -30,7 +30,7 @@ export const config = {
   streamingUrl:
     process.env.LISTENMUSIC_STREAMING_URL ??
     process.env.MUSIKE_STREAMING_URL ??
-    "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json",
+    "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json",
   /** HTTP for youtubei.js; the platform's own fetch here (the Android app passes its native one). */
   fetch: undefined as typeof fetch | undefined,
 };
