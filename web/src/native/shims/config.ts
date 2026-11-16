@@ -21,6 +21,18 @@ export const config = {
   authToken: null,
   streamingUrl:
     (typeof localStorage !== "undefined" && (localStorage.getItem("listenmusic:streaming-url") || localStorage.getItem("musike:streaming-url"))) ||
-    "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json",
+    "https://raw.githubusercontent.com/Beyain-Corp/ListenMusic/main/mobile/streaming.json",
   fetch: Capacitor.isNativePlatform() ? nativeFetch : devTransport ? makeFetch(devTransport) : undefined,
 };
+
+export function getCookieHeader(): string | undefined {
+  return undefined;
+}
+
+export function getCookiesFilePath(): string | null {
+  return null;
+}
+
+export function getWritableCookiesFile(): string | null {
+  return null;
+}
