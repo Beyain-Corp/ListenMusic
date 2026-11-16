@@ -1,5 +1,5 @@
 import { Innertube } from "youtubei.js";
-import { config } from "./config.js";
+import { config, getCookieHeader } from "./config.js";
 import { msg, youtubeLang, type Lang } from "./i18n.js";
 import type { Track } from "./types.js";
 import { HttpError, VIDEO_ID } from "./types.js";
@@ -11,7 +11,8 @@ const clients = new Map<string, Promise<Innertube>>();
 function yt(hl: string): Promise<Innertube> {
   let client = clients.get(hl);
   if (!client) {
-    client = Innertube.create({ retrieve_player: false, lang: hl, location: config.location, fetch: config.fetch }).catch((err) => {
+    const cookie = getCookieHeader();
+    client = Innertube.create({ retrieve_player: false, lang: hl, location: config.location, fetch: config.fetch, cookie }).catch((err) => {
       clients.delete(hl);
       throw err;
     });

@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readdir, rename, rm, stat, utimes } from "node:fs/promises";
 import path from "node:path";
 import { ensureComponent } from "./bootstrap.js";
-import { config } from "./config.js";
+import { config, getCookiesFilePath } from "./config.js";
 import { DEFAULT_CLIENTS, directAudio, fetchRemoteClients } from "./directAudio.js";
 import { tools } from "./tools.js";
 import { msg } from "./i18n.js";
@@ -59,7 +59,10 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     throw new HttpError(503, msg("ytdlpMissing"), "tool_missing");
   }
   return new Promise((resolve, reject) => {
-    const child = spawn(ytdlp, [...config.ytdlpExtraArgs, ...args], { windowsHide: true, env });
+    const cookieFile = getCookiesFilePath();
+    const hasCookiesArg = config.ytdlpExtraArgs.some((a) => a.includes("--cookies"));
+    const cookieArgs = cookieFile && !hasCookiesArg ? ["--cookies", cookieFile] : [];
+    const child = spawn(ytdlp, [...cookieArgs, ...config.ytdlpExtraArgs, ...args], { windowsHide: true, env });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {

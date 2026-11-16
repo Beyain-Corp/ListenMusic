@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -30,7 +31,53 @@ export const config = {
   streamingUrl:
     process.env.LISTENMUSIC_STREAMING_URL ??
     process.env.MUSIKE_STREAMING_URL ??
-    "https://raw.githubusercontent.com/MusicPlay/listenmusic/main/mobile/streaming.json",
+    "https://raw.githubusercontent.com/Beyain-Corp/ListenMusic/main/mobile/streaming.json",
   /** HTTP for youtubei.js; the platform's own fetch here (the Android app passes its native one). */
   fetch: undefined as typeof fetch | undefined,
 };
+
+/**
+ * Returns path to cookies file if provided explicitly in YTDLP_EXTRA_ARGS
+ * or if cookies.txt exists in the data directory or app root.
+ */
+export function getCookiesFilePath(): string | null {
+  for (let i = 0; i < config.ytdlpExtraArgs.length; i++) {
+    const arg = config.ytdlpExtraArgs[i];
+    if (arg === "--cookies" && i + 1 < config.ytdlpExtraArgs.length) {
+      return config.ytdlpExtraArgs[i + 1];
+    }
+    if (arg.startsWith("--cookies=")) {
+      return arg.slice(10);
+    }
+  }
+  const dataCookie = path.join(config.dataDir, "cookies.txt");
+  if (existsSync(dataCookie)) return dataCookie;
+  const rootCookie = path.join(root, "cookies.txt");
+  if (existsSync(rootCookie)) return rootCookie;
+  return null;
+}
+
+/**
+ * Reads and formats Netscape cookies.txt into standard Cookie header format for Innertube.
+ */
+export function getCookieHeader(): string | undefined {
+  const filePath = getCookiesFilePath();
+  if (!filePath) return undefined;
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    const pairs: string[] = [];
+    for (const rawLine of content.split("\n")) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith("#")) continue;
+      const parts = line.split("\t");
+      if (parts.length >= 7) {
+        const name = parts[5].trim();
+        const value = parts[6].trim();
+        if (name) pairs.push(`${name}=${value}`);
+      }
+    }
+    return pairs.length > 0 ? pairs.join("; ") : undefined;
+  } catch {
+    return undefined;
+  }
+}
