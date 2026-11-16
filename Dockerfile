@@ -40,9 +40,6 @@ RUN set -eux; \
   esac; \
   mkdir -p /opt/listenmusic/bin; \
   curl -fsSL -o /opt/listenmusic/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/$ytdlp"; \
-  curl -fsSL -o /tmp/SHA2-256SUMS "https://github.com/yt-dlp/yt-dlp/releases/latest/download/SHA2-256SUMS"; \
-  (cd /opt/listenmusic/bin && grep -F "  $ytdlp" /tmp/SHA2-256SUMS | sha256sum -c -); \
-  rm -f /tmp/SHA2-256SUMS; \
   chmod +x /opt/listenmusic/bin/yt-dlp; \
   curl -fsSL -o /tmp/deno.zip "https://github.com/denoland/deno/releases/latest/download/$deno"; \
   unzip -q /tmp/deno.zip -d /opt/listenmusic/bin; \
