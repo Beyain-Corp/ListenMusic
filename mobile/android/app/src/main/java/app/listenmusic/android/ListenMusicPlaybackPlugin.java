@@ -52,8 +52,15 @@ public class ListenMusicPlaybackPlugin extends Plugin {
             if (artwork != null) state.artwork = artwork;
             if (playing != null) state.playing = playing;
             if (duration != null) state.durationMs = Math.max(0, Math.round(duration * 1000));
-            PlaybackService.ensure(getContext());
+            else if (title != null) state.durationMs = 0; // a new track, not loaded yet
+            PlaybackService.refresh(getContext());
         });
         call.resolve();
+    }
+
+    @Override
+    protected void handleOnDestroy() {
+        PlaybackService.listener = null;
+        PlaybackService.shutdown(getContext());
     }
 }
