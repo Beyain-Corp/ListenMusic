@@ -51,7 +51,7 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
 
     const e = err as Error & { statusCode?: number };
     const status = e instanceof HttpError ? e.status : e.statusCode ?? 500;
-    if (status >= 500) app.log.error(e);
+    if (status >= 500) app.log.error({ err: e, url: req.raw.url, method: req.raw.method });
     // ListenMusic's own errors are translated into the language the app asked for.
     const error = e instanceof HttpError ? tr(langOf(req), e.text) : e.message;
     if (!reply.sent) reply.code(status).send({ error, code: e instanceof HttpError ? e.code : undefined });
