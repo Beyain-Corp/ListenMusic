@@ -26,6 +26,9 @@ export interface Library {
 import { tr, type Text } from "./i18n.js";
 
 export const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
+export const ALBUM_ID = /^MPRE[\w-]{6,60}$/;
+export const GENRE_ID = /^[\w-]{8,120}={0,2}$/;
+export const ARTIST_ID = /^UC[\w-]{22}$/;
 
 /** Machine-readable reason so the web app can offer the right fix (e.g. "update yt-dlp"). */
 export type ErrorCode = "tool_missing" | "maybe_outdated" | "bot_check";

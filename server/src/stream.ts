@@ -2,9 +2,10 @@ import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import type { FastifyReply, FastifyRequest } from "fastify";
+import { directAudio } from "./directAudio.js";
 import { msg } from "./i18n.js";
 import { HttpError } from "./types.js";
-import { invalidate, resolveStreams, type StreamFormat } from "./ytdlp.js";
+import { clientsForDirect, invalidate, resolveStreams, type StreamFormat } from "./ytdlp.js";
 
 const PASS_HEADERS = ["content-length", "content-range", "accept-ranges", "last-modified"];
 
@@ -33,30 +34,51 @@ export async function proxyStream(req: FastifyRequest, reply: FastifyReply, id: 
     return fetch(fmt.url, { headers, signal: controller.signal });
   };
 
-  let fmt = await pick(false);
-  let upstream = await request(fmt);
-  // Expired or rejected URL: resolve again once.
-  if (upstream.status === 403 || upstream.status === 410) {
-    await upstream.body?.cancel();
-    fmt = await pick(true);
-    upstream = await request(fmt);
-  }
-  if (!upstream.ok || !upstream.body) {
-    throw new HttpError(502, msg("streamRefused", { status: upstream.status }), "maybe_outdated");
-  }
+  try {
+    let fmt = await pick(false);
+    let upstream = await request(fmt);
+    // Expired or rejected URL: resolve again once.
+    if (upstream.status === 403 || upstream.status === 410) {
+      await upstream.body?.cancel().catch(() => {});
+      try {
+        fmt = await pick(true);
+        upstream = await request(fmt);
+      } catch {
+        /* let fallback handle it */
+      }
+    }
+    // Secondary fallback for audio: query YouTube directly without yt-dlp.
+    if ((!upstream.ok || !upstream.body) && kind === "audio") {
+      try {
+        const direct = await directAudio(id, await clientsForDirect());
+        fmt = { formatId: "direct", url: direct.url, headers: {}, mime: direct.mime };
+        upstream = await request(fmt);
+      } catch {
+        /* let streamRefused throw below */
+      }
+    }
+    if (!upstream.ok || !upstream.body) {
+      throw new HttpError(502, msg("streamRefused", { status: upstream.status }), "maybe_outdated");
+    }
 
-  reply.code(upstream.status);
-  reply.header("content-type", fmt.mime);
-  reply.header("cache-control", "no-store");
-  for (const h of PASS_HEADERS) {
-    const v = upstream.headers.get(h);
-    if (v) reply.header(h, v);
-  }
-  if (!upstream.headers.get("accept-ranges")) reply.header("accept-ranges", "bytes");
+    reply.code(upstream.status);
+    reply.header("content-type", fmt.mime);
+    reply.header("cache-control", "no-store");
+    for (const h of PASS_HEADERS) {
+      const v = upstream.headers.get(h);
+      if (v) reply.header(h, v);
+    }
+    if (!upstream.headers.get("accept-ranges")) reply.header("accept-ranges", "bytes");
 
-  const body = Readable.fromWeb(upstream.body as any);
-  body.on("error", () => body.destroy());
-  return reply.send(body);
+    const body = Readable.fromWeb(upstream.body as any);
+    body.on("error", () => body.destroy());
+    return reply.send(body);
+  } catch (err: any) {
+    if (controller.signal.aborted || err?.name === "AbortError" || reply.raw.destroyed) {
+      return;
+    }
+    throw err;
+  }
 }
 
 /** Serves a local file with byte-range support (used for cached HD video). */

@@ -14,7 +14,7 @@ const same = (a: string, b: string) => path.normalize(a).toLowerCase() === path.
 
 /**
  * The Android build (`vite build --mode native`): the same app, with the backend swapped. lib/api.ts (HTTP to the
- * Musike server) becomes native/api.ts (the server's own code, running in the app), and the two server modules that
+ * ListenMusic server) becomes native/api.ts (the server's own code, running in the app), and the two server modules that
  * only make sense on a computer (paths/environment, yt-dlp) are replaced by small stand-ins.
  */
 function nativeBackend(): Plugin {
@@ -24,11 +24,11 @@ function nativeBackend(): Plugin {
     [server("ytdlp.ts"), src("native", "shims", "ytdlp.ts")],
   ];
   return {
-    name: "musike-native-backend",
+    name: "listenmusic-native-backend",
     enforce: "pre",
     async resolveId(source, importer, options) {
       // No service worker inside the app: it would only risk serving an old version after an update.
-      if (source === "virtual:pwa-register") return "\0musike-no-pwa";
+      if (source === "virtual:pwa-register") return "\0listenmusic-no-pwa";
       const resolved = await this.resolve(source, importer, { ...options, skipSelf: true });
       if (!resolved) return null;
       const id = resolved.id.split("?")[0]!;
@@ -39,7 +39,7 @@ function nativeBackend(): Plugin {
       return null;
     },
     load(id) {
-      if (id === "\0musike-no-pwa") return "export const registerSW = () => () => {};";
+      if (id === "\0listenmusic-no-pwa") return "export const registerSW = () => () => {};";
       return null;
     },
   };
@@ -59,8 +59,8 @@ export default defineConfig(({ mode }) => {
             registerType: "autoUpdate",
             includeAssets: ["favicon.svg", "apple-touch-icon.png"],
             manifest: {
-              name: "Musike",
-              short_name: "Musike",
+              name: "ListenMusic",
+              short_name: "ListenMusic",
               description: "Your music, uninterrupted.",
               lang: "en",
               theme_color: "#0B0C0F",

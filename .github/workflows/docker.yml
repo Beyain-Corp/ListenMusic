@@ -1,5 +1,5 @@
 # Builds the Docker image for every release tag (v1.2.0 → :1.2.0, :1.2 and :latest) and publishes it
-# to GitHub Container Registry as ghcr.io/<owner>/musike. Can also be started by hand from the Actions tab.
+# to GitHub Container Registry as ghcr.io/<owner>/listenmusic. Can also be started by hand from the Actions tab.
 name: Docker image
 
 on:

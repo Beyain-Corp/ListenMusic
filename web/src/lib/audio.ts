@@ -3,7 +3,7 @@
  *
  * On iOS it is not an `<audio>` at all: the web view's media stack gets cut off by YouTube a few hundred kilobytes
  * into a track (the element pauses, silently, around fifteen seconds), so the app plays natively through the
- * `musikeAudio` handler (ios/App/App/MusikeAudio.swift). This class keeps the slice of the HTMLMediaElement API the
+ * `listenmusicAudio` handler (ios/App/App/MusikeAudio.swift). This class keeps the slice of the HTMLMediaElement API the
  * player uses — src, play, pause, currentTime, duration, volume, buffered and the events — backed by that player.
  *
  * Everywhere else it is the plain `<audio>` the app has always used.
@@ -20,8 +20,17 @@ interface NativePayload {
   message?: string;
 }
 
-const nativeBridge = (globalThis as { webkit?: { messageHandlers?: { musikeAudio?: Bridge } } }).webkit?.messageHandlers
-  ?.musikeAudio;
+const nativeBridge = (
+  globalThis as {
+    webkit?: {
+      messageHandlers?: {
+        listenmusicAudio?: Bridge;
+        musikeAudio?: Bridge;
+      };
+    };
+  }
+).webkit?.messageHandlers;
+const audioBridge = nativeBridge?.listenmusicAudio ?? nativeBridge?.musikeAudio;
 
 class Buffered {
   constructor(private to: number) {}
@@ -55,11 +64,16 @@ class NativeAudio extends EventTarget {
   constructor(private bridge: Bridge) {
     super();
     const host = globalThis as {
+      __listenmusicAudioEvent?: (event: string, data: NativePayload) => void;
+      __listenmusicAudioEl?: NativeAudio;
       __musikeAudioEvent?: (event: string, data: NativePayload) => void;
       __musikeAudioEl?: NativeAudio;
     };
-    host.__musikeAudioEvent = (event, data) => this.fromNative(event, data ?? {});
+    const handler = (event: string, data?: NativePayload) => this.fromNative(event, data ?? {});
+    host.__listenmusicAudioEvent = handler;
+    host.__musikeAudioEvent = handler;
     // Handy when something needs to poke the player from the console.
+    host.__listenmusicAudioEl = this;
     host.__musikeAudioEl = this;
   }
 
@@ -207,10 +221,10 @@ class NativeAudio extends EventTarget {
 
 /** The audio element for this platform: native on iOS, a real `<audio>` everywhere else. */
 export function createAudio(): HTMLAudioElement {
-  if (!nativeBridge) {
+  if (!audioBridge) {
     const audio = new Audio();
     audio.preload = "auto";
     return audio;
   }
-  return new NativeAudio(nativeBridge) as unknown as HTMLAudioElement;
+  return new NativeAudio(audioBridge) as unknown as HTMLAudioElement;
 }

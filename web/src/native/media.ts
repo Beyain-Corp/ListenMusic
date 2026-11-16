@@ -2,7 +2,7 @@ import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 import type { SystemMedia } from "../lib/apiTypes";
 
 /**
- * Bridge to the app's Android side (MusikePlaybackPlugin.java): a foreground service with a media session,
+ * Bridge to the app's Android side (ListenMusicPlaybackPlugin.java): a foreground service with a media session,
  * so music keeps playing with the screen off and the notification, lock screen and headphone buttons work.
  */
 interface PlaybackPlugin {
@@ -19,7 +19,7 @@ interface PlaybackPlugin {
 }
 
 const noop = async () => {};
-const Playback = registerPlugin<PlaybackPlugin>("MusikePlayback", {
+const Playback = registerPlugin<PlaybackPlugin>("ListenMusicPlayback", {
   // In a desktop browser (development), there is nothing to drive.
   web: () => ({ update: noop, addListener: async () => ({ remove: noop }) }),
 });
@@ -27,15 +27,23 @@ const Playback = registerPlugin<PlaybackPlugin>("MusikePlayback", {
 /**
  * Bridge to the app's iOS side (ios/App/App/MusikePlayback.swift). iOS has no Capacitor plugin here: the web view's
  * own message handler carries the now-playing info, and the lock screen's buttons come back as
- * window.__musikeMediaAction(), the same actions the Android plugin sends.
+ * window.__listenmusicMediaAction(), the same actions the Android plugin sends.
  */
 interface MessageBridge {
   postMessage(message: unknown): void;
 }
 
-const iosBridge = (
-  globalThis as { webkit?: { messageHandlers?: { musikeMedia?: MessageBridge } } }
-).webkit?.messageHandlers?.musikeMedia;
+const nativeHandlers = (
+  globalThis as {
+    webkit?: {
+      messageHandlers?: {
+        listenmusicMedia?: MessageBridge;
+        musikeMedia?: MessageBridge;
+      };
+    };
+  }
+).webkit?.messageHandlers;
+const iosBridge = nativeHandlers?.listenmusicMedia ?? nativeHandlers?.musikeMedia;
 
 // The system advances the position on its own while playing; only real changes need sending.
 let last = { playing: false, position: 0, at: 0 };
@@ -73,10 +81,13 @@ const iosMedia: SystemMedia = {
     iosBridge?.postMessage({ type: "state", playing, position, duration: Number.isFinite(duration) ? duration : 0 });
   },
   onAction(handler) {
-    (globalThis as { __musikeMediaAction?: (action: string, position?: number) => void }).__musikeMediaAction = (
-      action,
-      position,
-    ) => handler(action as Parameters<typeof handler>[0], position);
+    const fn = (action: string, position?: number) => handler(action as Parameters<typeof handler>[0], position);
+    const host = globalThis as {
+      __listenmusicMediaAction?: (action: string, position?: number) => void;
+      __musikeMediaAction?: (action: string, position?: number) => void;
+    };
+    host.__listenmusicMediaAction = fn;
+    host.__musikeMediaAction = fn;
   },
 };
 

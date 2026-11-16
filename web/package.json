@@ -1,5 +1,5 @@
 {
-  "name": "@musike/web",
+  "name": "@listenmusic/web",
   "private": true,
   "version": "1.5.1",
   "type": "module",
@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "build:native": "tsc --noEmit -p tsconfig.native.json && vite build --mode native",
     "preview": "vite preview --host",
+    "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.native.json"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "^7.0.2",
     "vite": "8.3.4",
     "vite-plugin-pwa": "2.0.0",

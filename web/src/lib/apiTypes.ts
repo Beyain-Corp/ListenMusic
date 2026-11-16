@@ -1,7 +1,7 @@
 import type { AlbumCard, AlbumPage, ArtistPage, Genre, GenreArtist, GenrePage, Library, Playlist, Track } from "./types";
 
 /**
- * What the app needs from a backend. The web app and the desktop app talk to the Musike server over HTTP
+ * What the app needs from a backend. The web app and the desktop app talk to the ListenMusic server over HTTP
  * (lib/api.ts); the Android app does the same work on the phone (native/api.ts). The build picks one.
  */
 
@@ -65,7 +65,7 @@ export interface SystemMedia {
   onAction(handler: (action: "play" | "pause" | "next" | "previous" | "seek", position?: number) => void): void;
 }
 
-export interface MusikeApi {
+export interface ListenMusicApi {
   search(q: string, type: "song" | "video", signal?: AbortSignal): Promise<Track[]>;
   suggest(q: string, signal?: AbortSignal): Promise<string[]>;
   radio(id: string): Promise<Track[]>;
@@ -94,3 +94,5 @@ export interface MusikeApi {
   system(): Promise<SystemInfo>;
   updateYtdlp(channel: Channel): Promise<SystemJob>;
 }
+
+export type MusikeApi = ListenMusicApi;

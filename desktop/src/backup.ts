@@ -37,7 +37,7 @@ export function backupLibraryOnUpdate(userData: string, version: string, now = n
     writeFileSync(versionFile, JSON.stringify({ version }));
     return made;
   } catch (err) {
-    console.error("Backup da biblioteca falhou:", err);
+    console.error("Library backup failed:", err);
     return null;
   }
 }

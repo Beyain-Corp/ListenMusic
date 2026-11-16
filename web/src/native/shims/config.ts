@@ -13,10 +13,14 @@ function region(): string {
 
 // Development only: a desktop browser running this build can't use native HTTP, so a test harness may provide
 // a stand-in transport (a local proxy that does the same job).
-const devTransport = (globalThis as { __musikeTransport?: Transport }).__musikeTransport;
+const devTransport = (globalThis as { __listenmusicTransport?: Transport; __musikeTransport?: Transport }).__listenmusicTransport ?? (globalThis as { __musikeTransport?: Transport }).__musikeTransport;
 
 export const config = {
   lang: "en",
   location: region(),
+  authToken: null,
+  streamingUrl:
+    (typeof localStorage !== "undefined" && (localStorage.getItem("listenmusic:streaming-url") || localStorage.getItem("musike:streaming-url"))) ||
+    "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json",
   fetch: Capacitor.isNativePlatform() ? nativeFetch : devTransport ? makeFetch(devTransport) : undefined,
 };

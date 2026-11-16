@@ -19,3 +19,20 @@ export function shuffled<T>(items: T[]): T[] {
   }
   return a;
 }
+
+export const MAX_BATCH_TERMS = 50;
+
+/** "a, b\nc, a" → ["a", "b", "c"]. Commas or line breaks separate songs; repeats are dropped. */
+export function parseList(text: string, max = MAX_BATCH_TERMS): string[] {
+  const seen = new Set<string>();
+  return text
+    .split(/[,\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => {
+      const key = s.toLocaleLowerCase("pt-BR");
+      if (!s || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, max);
+}

@@ -16,15 +16,18 @@ import * as library from "../../../server/src/library";
 import { findVideoFor, radio, search, suggestions } from "../../../server/src/search";
 import { HttpError, VIDEO_ID } from "../../../server/src/types";
 import { getLang, getT } from "../i18n";
-import { ApiError, type MusikeApi, type SystemInfo } from "../lib/apiTypes";
+import { ApiError, type ListenMusicApi, type SystemInfo } from "../lib/apiTypes";
 import "./android";
 import { media } from "./media";
 import { nativeStorage } from "./storage";
 import { forgetUrl, resolveAudio } from "./streams";
 
-// The Android backend: the Musike server's own code (search, genres, artists, albums, library), running on the
+// The Android backend: the ListenMusic server's own code (search, genres, artists, albums, library), running on the
 // phone instead of behind HTTP. The build swaps lib/api.ts for this module (see vite.config.ts).
 export * from "../lib/apiTypes";
+
+export const getAuthToken = (): string | null => null;
+export const setAuthToken = (_token: string | null): void => {};
 
 library.useLibraryStorage(nativeStorage);
 
@@ -55,7 +58,7 @@ const SYSTEM: SystemInfo = {
   job: null,
 };
 
-export const api: MusikeApi = {
+export const api: ListenMusicApi = {
   search: (q, type, signal) =>
     call(async () => {
       if (!q.trim()) throw fail(400, "emptyQuery");
@@ -102,7 +105,7 @@ export const api: MusikeApi = {
   importLibrary: (backup, mode) =>
     call(async () => {
       const b = (backup ?? {}) as { format?: unknown; version?: unknown; library?: unknown };
-      if (b.format !== "musike-backup") throw fail(400, "notBackup");
+      if (b.format !== "listenmusic-backup" && b.format !== "musike-backup") throw fail(400, "notBackup");
       if (typeof b.version !== "number" || b.version > 1) throw fail(400, "newerBackup");
       return library.importLibrary(b.library, mode);
     }),

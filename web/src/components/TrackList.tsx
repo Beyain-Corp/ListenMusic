@@ -1,5 +1,5 @@
 import { ClockIcon, DotsThreeIcon, HeartIcon, VideoCameraIcon } from "@phosphor-icons/react";
-import { memo, type MouseEvent } from "react";
+import { memo, useEffect, useRef, useState, type MouseEvent } from "react";
 import { useT } from "../i18n";
 import { cn, formatTime } from "../lib/format";
 import type { Track } from "../lib/types";
@@ -116,11 +116,38 @@ interface ListProps {
   header?: boolean;
 }
 
+const CHUNK_SIZE = 50;
+
 export function TrackList({ tracks, context, playlistId, showAlbum: albumWanted = true, header = true }: ListProps) {
   const playList = usePlayer((s) => s.playList);
   const t = useT();
   // Pages ask for the album column where it makes sense; Settings can turn it off everywhere.
   const showAlbum = useAppearance((s) => s.albumColumn) && albumWanted;
+  const [limit, setLimit] = useState(CHUNK_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setLimit(CHUNK_SIZE);
+  }, [tracks]);
+
+  useEffect(() => {
+    if (limit >= tracks.length) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setLimit((prev) => Math.min(prev + CHUNK_SIZE, tracks.length));
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [limit, tracks.length]);
+
+  const visible = tracks.length <= CHUNK_SIZE ? tracks : tracks.slice(0, limit);
+
   return (
     <div>
       {header && (
@@ -143,7 +170,7 @@ export function TrackList({ tracks, context, playlistId, showAlbum: albumWanted 
         </div>
       )}
       <ul className="flex flex-col">
-        {tracks.map((t, i) => (
+        {visible.map((t, i) => (
           <TrackRow
             key={`${t.id}-${i}`}
             track={t}
@@ -154,6 +181,7 @@ export function TrackList({ tracks, context, playlistId, showAlbum: albumWanted 
           />
         ))}
       </ul>
+      {limit < tracks.length && <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />}
     </div>
   );
 }

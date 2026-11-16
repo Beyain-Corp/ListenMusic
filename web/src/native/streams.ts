@@ -18,14 +18,16 @@ const ios = Capacitor.getPlatform() === "ios";
 // yt-dlp itself relies on.
 const PLATFORM_CLIENTS = ios ? ["IOS", "VISIONOS"] : DEFAULT_CLIENTS;
 const REMOTE_KEY = ios ? "ios" : "clients";
-const CLIENTS_KEY = ios ? "musike:stream-clients-ios" : "musike:stream-clients";
+const CLIENTS_KEY = ios ? "listenmusic:stream-clients-ios" : "listenmusic:stream-clients";
+const LEGACY_CLIENTS_KEY = ios ? "musike:stream-clients-ios" : "musike:stream-clients";
 
 const cache = new Map<string, DirectAudio>();
 const inflight = new Map<string, Promise<DirectAudio>>();
 
 function storedClients(): string[] {
   try {
-    return validClients(JSON.parse(localStorage.getItem(CLIENTS_KEY) ?? "null")) ?? PLATFORM_CLIENTS;
+    const raw = localStorage.getItem(CLIENTS_KEY) ?? localStorage.getItem(LEGACY_CLIENTS_KEY);
+    return validClients(JSON.parse(raw ?? "null")) ?? PLATFORM_CLIENTS;
   } catch {
     return PLATFORM_CLIENTS;
   }

@@ -1,4 +1,4 @@
-package app.musike.android;
+package app.listenmusic.android;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -30,19 +30,19 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Keeps Musike alive while music plays and connects it to the system: the media notification, the lock screen,
+ * Keeps ListenMusic alive while music plays and connects it to the system: the media notification, the lock screen,
  * headphone and Bluetooth buttons, and pausing when headphones are unplugged. The music itself plays in the
- * WebView; this service only mirrors what the app reports (see MusikePlaybackPlugin) and relays the buttons back.
+ * WebView; this service only mirrors what the app reports (see ListenMusicPlaybackPlugin) and relays the buttons back.
  * Everything here runs on the main thread.
  */
 // A media-session notification doesn't need the notification permission (Android 13+ exempts it).
 @SuppressLint("NotificationPermission")
 public class PlaybackService extends Service {
 
-    private static final String TAG = "MusikePlayback";
+    private static final String TAG = "ListenMusicPlayback";
     private static final String CHANNEL = "playback";
     private static final int NOTIFICATION_ID = 1;
-    private static final String ACTION = "app.musike.android.action.";
+    private static final String ACTION = "app.listenmusic.android.action.";
 
     /** What the app last reported. */
     static final class NowPlaying {
@@ -106,7 +106,7 @@ public class PlaybackService extends Service {
         super.onCreate();
         instance = this;
         notifications = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        wakeLock = ((PowerManager) getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Musike:playback");
+        wakeLock = ((PowerManager) getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ListenMusic:playback");
         wakeLock.setReferenceCounted(false);
 
         if (Build.VERSION.SDK_INT >= 26) {
@@ -115,7 +115,7 @@ public class PlaybackService extends Service {
             notifications.createNotificationChannel(channel);
         }
 
-        session = new MediaSession(this, "Musike");
+        session = new MediaSession(this, "ListenMusic");
         session.setSessionActivity(openApp());
         if (Build.VERSION.SDK_INT < 26) {
             session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -187,7 +187,7 @@ public class PlaybackService extends Service {
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        // Swiping Musike away closes the page that plays the music, so the controls have nothing left to control.
+        // Swiping ListenMusic away closes the page that plays the music, so the controls have nothing left to control.
         stopSelf();
     }
 
@@ -282,7 +282,7 @@ public class PlaybackService extends Service {
 
     private Notification buildNotification() {
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
-        b.setSmallIcon(R.drawable.ic_stat_musike)
+        b.setSmallIcon(R.drawable.ic_stat_listenmusic)
             .setContentTitle(state.title)
             .setContentText(state.artist)
             .setLargeIcon(artwork)
@@ -361,7 +361,7 @@ public class PlaybackService extends Service {
                     render();
                 });
             },
-            "musike-artwork"
+            "listenmusic-artwork"
         ).start();
     }
 

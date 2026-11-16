@@ -10,13 +10,13 @@ def keystoreProps = new Properties()
 def keystoreFile = rootProject.file('keystore.properties')
 if (keystoreFile.exists()) keystoreFile.withInputStream { keystoreProps.load(it) }
 def signingValue = { String prop, String env -> keystoreProps.getProperty(prop) ?: System.getenv(env) }
-def releaseStore = signingValue('storeFile', 'MUSIKE_KEYSTORE')
+def releaseStore = signingValue('storeFile', 'LISTENMUSIC_KEYSTORE') ?: signingValue('storeFile', 'MUSIKE_KEYSTORE')
 
 android {
-    namespace = "app.musike.android"
+    namespace = "app.listenmusic.android"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.musike.android"
+        applicationId "app.listenmusic.android"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode versionParts[0] * 10000 + versionParts[1] * 100 + versionParts[2]
@@ -32,9 +32,9 @@ android {
         if (releaseStore) {
             release {
                 storeFile rootProject.file(releaseStore)
-                storePassword signingValue('storePassword', 'MUSIKE_KEYSTORE_PASSWORD')
-                keyAlias signingValue('keyAlias', 'MUSIKE_KEY_ALIAS')
-                keyPassword signingValue('keyPassword', 'MUSIKE_KEY_PASSWORD')
+                storePassword signingValue('storePassword', 'LISTENMUSIC_KEYSTORE_PASSWORD') ?: signingValue('storePassword', 'MUSIKE_KEYSTORE_PASSWORD')
+                keyAlias signingValue('keyAlias', 'LISTENMUSIC_KEY_ALIAS') ?: signingValue('keyAlias', 'MUSIKE_KEY_ALIAS')
+                keyPassword signingValue('keyPassword', 'LISTENMUSIC_KEY_PASSWORD') ?: signingValue('keyPassword', 'MUSIKE_KEY_PASSWORD')
             }
         }
     }

@@ -1,5 +1,5 @@
 {
-  "name": "@musike/server",
+  "name": "@listenmusic/server",
   "private": true,
   "version": "1.5.1",
   "type": "module",
@@ -7,6 +7,7 @@
     "dev": "tsx watch --clear-screen=false src/index.ts",
     "start": "tsx src/index.ts",
     "bundle": "node scripts/bundle.mjs",
+    "test": "tsx --test test/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -2,7 +2,8 @@ import type { Innertube } from "youtubei.js";
 import { isLang, msg, type Lang } from "./i18n.js";
 import { sized, text, toTrack, withClient } from "./search.js";
 import type { Track } from "./types.js";
-import { HttpError, VIDEO_ID } from "./types.js";
+import { HttpError, VIDEO_ID, ALBUM_ID, ARTIST_ID, GENRE_ID } from "./types.js";
+export { ALBUM_ID, ARTIST_ID, GENRE_ID };
 
 export interface Genre {
   /** YouTube Music's opaque "params" for the genre page. */
@@ -63,10 +64,7 @@ export interface AlbumPage {
   tracks: Track[];
 }
 
-export const ALBUM_ID = /^MPRE[\w-]{6,60}$/;
 
-export const GENRE_ID = /^[\w-]{8,120}={0,2}$/;
-export const ARTIST_ID = /^UC[\w-]{22}$/;
 
 const MINUTE = 60_000;
 const ARTISTS_PAGE = 40;

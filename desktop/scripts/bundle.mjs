@@ -1,4 +1,4 @@
-// Bundles the Electron main process (with the whole Musike server inside) and the preload script.
+// Bundles the Electron main process (with the whole ListenMusic server inside) and the preload script.
 // The packaged app then needs no node_modules at all.
 import { copyFileSync, mkdirSync } from "node:fs";
 import path from "node:path";

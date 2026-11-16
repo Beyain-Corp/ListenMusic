@@ -13,8 +13,11 @@ final class MusikeWebViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         // Capacitor replaces the web view's userContentController after the configuration is built, so the handlers
         // are added here, once the web view exists.
+        webView?.configuration.userContentController.add(playback, name: "listenmusicMedia")
         webView?.configuration.userContentController.add(playback, name: "musikeMedia")
+        webView?.configuration.userContentController.add(youtube, name: "listenmusicResolve")
         webView?.configuration.userContentController.add(youtube, name: "musikeResolve")
+        webView?.configuration.userContentController.add(audio, name: "listenmusicAudio")
         webView?.configuration.userContentController.add(audio, name: "musikeAudio")
         playback.attach(webView)
         youtube.attach(webView)

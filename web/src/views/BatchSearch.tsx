@@ -7,30 +7,15 @@ import { EmptyState, PageHeader } from "../components/Page";
 import { SelectableRow, SelectedCount, SelectionBar } from "../components/Selection";
 import { api } from "../lib/api";
 import { useT } from "../i18n";
-import { cn } from "../lib/format";
+import { cn, MAX_BATCH_TERMS as MAX_TERMS, parseList } from "../lib/format";
+export { parseList };
 import { paths } from "../lib/routes";
 import type { Track } from "../lib/types";
 import { usePlayer } from "../player/player";
 
-const MAX_TERMS = 50;
 /** Results kept per term, so a wrong first match can be swapped for the right one. */
 const OPTIONS = 5;
 const CONCURRENCY = 3;
-
-/** "a, b\nc, a" → ["a", "b", "c"]. Commas or line breaks separate songs; repeats are dropped. */
-export function parseList(text: string): string[] {
-  const seen = new Set<string>();
-  return text
-    .split(/[,\n]+/)
-    .map((s) => s.trim())
-    .filter((s) => {
-      const key = s.toLocaleLowerCase("pt-BR");
-      if (!s || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, MAX_TERMS);
-}
 
 interface Entry {
   query: string;

@@ -35,6 +35,7 @@ interface RawFormat {
   abr?: number;
   protocol?: string;
   http_headers?: Record<string, string>;
+  available_at?: number;
 }
 
 const RESOLVE_TIMEOUT_MS = 45_000;
@@ -115,18 +116,26 @@ function toStream(f: RawFormat, kind: "audio" | "video"): StreamFormat {
 }
 
 function pickAudio(formats: RawFormat[]): RawFormat | undefined {
+  const now = Math.floor(Date.now() / 1000);
   const audio = formats.filter((f) => isAudioOnly(f) && isHttps(f));
+  // Prefer formats ready right now (filters out formats delayed by YouTube pre-roll ad timers).
+  const ready = audio.filter((f) => !f.available_at || f.available_at <= now);
+  const pool = ready.length > 0 ? ready : audio;
+
   // AAC in MP4 plays everywhere, including iOS Safari. Opus/WebM is the fallback.
   return (
-    audio.find((f) => f.format_id === "140") ??
-    audio.filter((f) => f.ext === "m4a").sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0] ??
-    audio.sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0]
+    pool.find((f) => f.format_id === "140") ??
+    pool.filter((f) => f.ext === "m4a").sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0] ??
+    pool.sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0]
   );
 }
 
 function pickVideo(formats: RawFormat[]): RawFormat | undefined {
+  const now = Math.floor(Date.now() / 1000);
   const muxed = formats.filter((f) => isMuxed(f) && isHttps(f) && f.ext === "mp4");
-  return muxed.find((f) => f.format_id === "18") ?? muxed.sort((a, b) => (b.height ?? 0) - (a.height ?? 0))[0];
+  const ready = muxed.filter((f) => !f.available_at || f.available_at <= now);
+  const pool = ready.length > 0 ? ready : muxed;
+  return pool.find((f) => f.format_id === "18") ?? pool.sort((a, b) => (b.height ?? 0) - (a.height ?? 0))[0];
 }
 
 function expiryOf(url: string): number {
@@ -144,7 +153,7 @@ const resolvedAt = new Map<string, Resolved>();
 let directClients: string[] | null = null;
 let directClientsAt = 0;
 
-async function clientsForDirect(): Promise<string[]> {
+export async function clientsForDirect(): Promise<string[]> {
   if (Date.now() - directClientsAt > 6 * 3600_000) {
     directClientsAt = Date.now();
     directClients = (await fetchRemoteClients()) ?? directClients;
@@ -180,7 +189,14 @@ export function resolveStreams(id: string): Promise<Resolved> {
   const inflight = cache.get(id);
   if (inflight) return inflight;
 
-  const job = run(["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`], RESOLVE_TIMEOUT_MS)
+  const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
+    ? []
+    : ["--extractor-args", "youtube:player_client=visionos,android,web"];
+
+  const job = run(
+    ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
+    RESOLVE_TIMEOUT_MS,
+  )
     .then((stdout): Resolved => {
       const info = JSON.parse(stdout) as { title: string; duration?: number; formats: RawFormat[] };
       const audio = pickAudio(info.formats);

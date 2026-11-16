@@ -25,11 +25,12 @@ import type { AlbumCard, Track } from "../lib/types";
 import { usePlayer } from "../player/player";
 import { parseList } from "./BatchSearch";
 
-const RECENT_KEY = "musike:recent-searches";
+const RECENT_KEY = "listenmusic:recent-searches";
 
 function readRecent(): string[] {
   try {
-    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? "[]") as string[];
+    const raw = localStorage.getItem(RECENT_KEY) ?? localStorage.getItem("musike:recent-searches");
+    return JSON.parse(raw ?? "[]") as string[];
   } catch {
     return [];
   }

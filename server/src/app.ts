@@ -39,20 +39,43 @@ export interface RunningServer {
   close: () => Promise<void>;
 }
 
-/** Builds the Musike HTTP server (API + web app) and starts listening. */
+/** Builds the ListenMusic HTTP server (API + web app) and starts listening. */
 export async function startServer(opts: StartOptions = {}): Promise<RunningServer> {
   library.useLibraryStorage(fileStorage());
   const found = await refreshTools();
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "warn" } });
 
   app.setErrorHandler((err, req, reply) => {
+    // Normal client abort / disconnect when pausing, skipping or seeking a stream
+    if ((err as { name?: string })?.name === "AbortError" || reply.raw.destroyed) return;
+
     const e = err as Error & { statusCode?: number };
     const status = e instanceof HttpError ? e.status : e.statusCode ?? 500;
     if (status >= 500) app.log.error(e);
-    // Musike's own errors are translated into the language the app asked for.
+    // ListenMusic's own errors are translated into the language the app asked for.
     const error = e instanceof HttpError ? tr(langOf(req), e.text) : e.message;
     if (!reply.sent) reply.code(status).send({ error, code: e instanceof HttpError ? e.code : undefined });
   });
+
+  if (config.authToken) {
+    app.addHook("preHandler", async (req, reply) => {
+      // Allow docker / container healthcheck without auth
+      if (req.url === "/api/health" || req.url.startsWith("/api/health?")) return;
+      // Only protect /api routes, static files (web app) should still be served
+      if (!req.url.startsWith("/api/")) return;
+
+      const authHeader = req.headers.authorization;
+      const bearer = authHeader?.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+      const tokenHeader = req.headers["x-listenmusic-token"] ?? req.headers["x-musike-token"];
+      const queryToken = (req.query as { token?: string } | undefined)?.token;
+      const provided = bearer || (typeof tokenHeader === "string" ? tokenHeader : null) || queryToken;
+
+      if (!provided || provided !== config.authToken) {
+        reply.code(401).send({ error: "Unauthorized: Invalid or missing authentication token" });
+        return reply;
+      }
+    });
+  }
 
   app.get("/api/health", async () => ({ ok: true }));
 
@@ -147,11 +170,11 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
 
   app.get("/api/library", () => library.getLibrary());
 
-  /** Restores a backup file exported by any Musike instance. Big libraries need more than the 1 MB default body. */
+  /** Restores a backup file exported by any ListenMusic instance. Big libraries need more than the 1 MB default body. */
   app.post("/api/library/import", { bodyLimit: 25 * 1024 * 1024 }, async (req) => {
     const body = (req.body ?? {}) as { backup?: { format?: unknown; version?: unknown; library?: unknown }; mode?: unknown };
     const backup = body.backup;
-    if (backup?.format !== "musike-backup") throw new HttpError(400, msg("notBackup"));
+    if (backup?.format !== "listenmusic-backup" && backup?.format !== "musike-backup") throw new HttpError(400, msg("notBackup"));
     if (typeof backup.version !== "number" || backup.version > 1) {
       throw new HttpError(400, msg("newerBackup"));
     }

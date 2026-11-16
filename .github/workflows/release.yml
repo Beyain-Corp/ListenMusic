@@ -4,8 +4,8 @@
 # The draft only goes public when it's published by hand, after checking it.
 #
 # The APK is signed with the key in these repository secrets (Settings → Secrets and variables → Actions):
-#   MUSIKE_KEYSTORE_BASE64    the .jks file, base64-encoded
-#   MUSIKE_KEYSTORE_PASSWORD  MUSIKE_KEY_ALIAS  MUSIKE_KEY_PASSWORD
+#   LISTENMUSIC_KEYSTORE_BASE64    the .jks file, base64-encoded
+#   LISTENMUSIC_KEYSTORE_PASSWORD  LISTENMUSIC_KEY_ALIAS  LISTENMUSIC_KEY_PASSWORD
 # Always the same key: Android only installs an update signed like the version already on the phone.
 name: Release
 
@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter musike-desktop dist
+      - run: pnpm --filter listenmusic-desktop dist
       - name: Check downloads
         shell: bash
         run: |
@@ -52,7 +52,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Ad-hoc signed (no Apple Developer ID): enough to run on Apple Silicon; Gatekeeper asks once.
-      - run: pnpm --filter musike-desktop dist:mac
+      - run: pnpm --filter listenmusic-desktop dist:mac
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
       - name: Check downloads
@@ -78,7 +78,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # AppImage and .deb, for x64 and arm64 (the arm64 ones are packaged here too: nothing is compiled).
-      - run: pnpm --filter musike-desktop dist:linux
+      - run: pnpm --filter listenmusic-desktop dist:linux
       - name: Check downloads
         shell: bash
         run: |
@@ -107,19 +107,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Signing key
         env:
-          KEYSTORE_BASE64: ${{ secrets.MUSIKE_KEYSTORE_BASE64 }}
+          KEYSTORE_BASE64: ${{ secrets.LISTENMUSIC_KEYSTORE_BASE64 || secrets.MUSIKE_KEYSTORE_BASE64 }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
-            echo "::warning::MUSIKE_KEYSTORE_BASE64 is not set: the APK will be unsigned and won't install."
+            echo "::warning::LISTENMUSIC_KEYSTORE_BASE64 is not set: the APK will be unsigned and won't install."
             exit 0
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/musike-release.jks"
-          echo "MUSIKE_KEYSTORE=$RUNNER_TEMP/musike-release.jks" >> "$GITHUB_ENV"
-      - run: pnpm --filter @musike/mobile apk
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/listenmusic-release.jks"
+          echo "LISTENMUSIC_KEYSTORE=$RUNNER_TEMP/listenmusic-release.jks" >> "$GITHUB_ENV"
+      - run: pnpm --filter @listenmusic/mobile apk
         env:
-          MUSIKE_KEYSTORE_PASSWORD: ${{ secrets.MUSIKE_KEYSTORE_PASSWORD }}
-          MUSIKE_KEY_ALIAS: ${{ secrets.MUSIKE_KEY_ALIAS }}
-          MUSIKE_KEY_PASSWORD: ${{ secrets.MUSIKE_KEY_PASSWORD }}
+          LISTENMUSIC_KEYSTORE_PASSWORD: ${{ secrets.LISTENMUSIC_KEYSTORE_PASSWORD || secrets.MUSIKE_KEYSTORE_PASSWORD }}
+          LISTENMUSIC_KEY_ALIAS: ${{ secrets.LISTENMUSIC_KEY_ALIAS || secrets.MUSIKE_KEY_ALIAS }}
+          LISTENMUSIC_KEY_PASSWORD: ${{ secrets.LISTENMUSIC_KEY_PASSWORD || secrets.MUSIKE_KEY_PASSWORD }}
       - name: Check downloads
         shell: bash
         run: |
@@ -143,7 +143,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # Unsigned on purpose: AltStore, SideStore or Sideloadly sign it with the user's own Apple ID when installing.
-      - run: pnpm --filter @musike/mobile ipa
+      - run: pnpm --filter @listenmusic/mobile ipa
       - name: Check downloads
         shell: bash
         run: |

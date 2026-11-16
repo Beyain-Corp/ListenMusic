@@ -4,7 +4,7 @@ import {
   type Channel,
   type ErrorCode,
   type ImportResult,
-  type MusikeApi,
+  type ListenMusicApi,
   type Prepared,
   type SystemInfo,
   type SystemJob,
@@ -12,18 +12,44 @@ import {
 } from "./apiTypes";
 import type { AlbumCard, AlbumPage, ArtistPage, Genre, GenreArtist, GenrePage, Library, Playlist, Track } from "./types";
 
-// The HTTP backend: the Musike server (web app, desktop app). The Android build swaps this module for native/api.ts.
+// The HTTP backend: the ListenMusic server (web app, desktop app). The Android build swaps this module for native/api.ts.
 export * from "./apiTypes";
 
 /** The server answers errors (and YouTube Music answers names, like genres) in the app's language. */
-const LANG_HEADER = "x-musike-lang";
+const LANG_HEADER = "x-listenmusic-lang";
+const AUTH_TOKEN_KEY = "listenmusic:auth-token";
+
+export function getAuthToken(): string | null {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY) ?? localStorage.getItem("musike:auth-token");
+  } catch {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string | null): void {
+  try {
+    if (token) {
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+      localStorage.setItem("musike:auth-token", token);
+    } else {
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem("musike:auth-token");
+    }
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 async function request<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
   const { json, ...rest } = init ?? {};
+  const token = getAuthToken();
   const res = await fetch(path, {
     ...rest,
     headers: {
       [LANG_HEADER]: getLang(),
+      "x-musike-lang": getLang(),
+      ...(token ? { "x-listenmusic-token": token, "x-musike-token": token, Authorization: `Bearer ${token}` } : {}),
       ...(json !== undefined ? { "content-type": "application/json" } : {}),
       ...(rest.headers as Record<string, string> | undefined),
     },
@@ -35,7 +61,7 @@ async function request<T>(path: string, init?: RequestInit & { json?: unknown })
   return body as T;
 }
 
-export const api: MusikeApi = {
+export const api: ListenMusicApi = {
   search: (q: string, type: "song" | "video", signal?: AbortSignal) =>
     request<{ tracks: Track[] }>(`/api/search?q=${encodeURIComponent(q)}&type=${type}`, { signal }).then((r) => r.tracks),
   suggest: (q: string, signal?: AbortSignal) =>
@@ -82,8 +108,14 @@ export const api: MusikeApi = {
 };
 
 /** What a media element plays for a track: here, the server's stream proxy. The Android backend resolves it on the phone. */
-export const streamSource = (id: string, kind: "audio" | "video", quality: "sd" | "hd"): string | Promise<string> =>
-  kind === "audio" ? `/api/stream/${id}/audio` : `/api/stream/${id}/video?q=${quality}`;
+export const streamSource = (id: string, kind: "audio" | "video", quality: "sd" | "hd"): string | Promise<string> => {
+  const token = getAuthToken();
+  const tokenQuery = token ? `token=${encodeURIComponent(token)}` : "";
+  if (kind === "audio") {
+    return `/api/stream/${id}/audio${tokenQuery ? `?${tokenQuery}` : ""}`;
+  }
+  return `/api/stream/${id}/video?q=${quality}${tokenQuery ? `&${tokenQuery}` : ""}`;
+};
 
 /** Saves a text file the way this platform does it: a browser download (the desktop app shows "Save as"). */
 export async function saveFile(name: string, text: string) {

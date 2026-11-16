@@ -31,10 +31,10 @@ async function load(): Promise<Library> {
   return state;
 }
 
-/** Serialized writes so concurrent requests never interleave. */
+/** Serialized writes so concurrent requests never interleave. Recovers from prior errors so transient failures do not lock persistence. */
 function persist(): Promise<void> {
   const snapshot = JSON.stringify(state, null, 2);
-  writeChain = writeChain.then(() => storage!.write(snapshot));
+  writeChain = writeChain.catch(() => {}).then(() => storage!.write(snapshot));
   return writeChain;
 }
 
@@ -150,7 +150,7 @@ export async function removeFromPlaylist(pid: string, trackId: string): Promise<
   return p;
 }
 
-// Backup import: a library exported from any Musike instance (web, desktop, another computer).
+// Backup import: a library exported from any ListenMusic instance (web, desktop, another computer).
 
 const MAX_PLAYLISTS = 1000;
 const MAX_TRACKS = 5000;

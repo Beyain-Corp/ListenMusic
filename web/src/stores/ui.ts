@@ -58,7 +58,8 @@ interface UiState {
 const readTheme = (): Theme => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
 const readPanel = (): boolean => {
   try {
-    return localStorage.getItem("musike:panel") !== "closed";
+    const val = localStorage.getItem("listenmusic:panel") ?? localStorage.getItem("musike:panel");
+    return val !== "closed";
   } catch {
     return true;
   }
@@ -83,6 +84,7 @@ export const useUi = create<UiState>((set, get) => ({
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#0B0C0F" : "#E9EBEF");
     desktop?.setTheme(theme);
     try {
+      localStorage.setItem("listenmusic:theme", theme);
       localStorage.setItem("musike:theme", theme);
     } catch {
       /* private mode */
@@ -103,6 +105,7 @@ export const useUi = create<UiState>((set, get) => ({
     }
     const open = !(panelOpen && panelTab === tab);
     try {
+      localStorage.setItem("listenmusic:panel", open ? "open" : "closed");
       localStorage.setItem("musike:panel", open ? "open" : "closed");
     } catch {
       /* private mode */
@@ -112,6 +115,7 @@ export const useUi = create<UiState>((set, get) => ({
   closePanel: () => set({ drawerOpen: false }),
   setPanelDocked: (open) => {
     try {
+      localStorage.setItem("listenmusic:panel", open ? "open" : "closed");
       localStorage.setItem("musike:panel", open ? "open" : "closed");
     } catch {
       /* private mode */

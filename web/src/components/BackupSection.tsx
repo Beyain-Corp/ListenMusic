@@ -7,7 +7,7 @@ import { toast } from "../stores/ui";
 
 type Mode = "merge" | "replace";
 
-/** Export the library to a file and import it in any other Musike (web, desktop, another computer). */
+/** Export the library to a file and import it in any other ListenMusic (web, desktop, another computer). */
 export function BackupSection() {
   const input = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState<{ backup: Backup; file: string } | null>(null);

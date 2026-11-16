@@ -19,10 +19,10 @@ if (!app.requestSingleInstanceLock()) {
 
 // Everything the user owns lives in their profile, so updates and reinstalls keep it.
 const userData = app.getPath("userData");
-process.env.MUSIKE_DATA_DIR = path.join(userData, "data");
-process.env.MUSIKE_CACHE_DIR = path.join(userData, "cache");
-process.env.MUSIKE_BIN_DIR = path.join(userData, "bin");
-process.env.MUSIKE_WEB_DIST = app.isPackaged ? path.join(process.resourcesPath, "web") : path.resolve(here, "..", "..", "web", "dist");
+process.env.LISTENMUSIC_DATA_DIR = process.env.MUSIKE_DATA_DIR = path.join(userData, "data");
+process.env.LISTENMUSIC_CACHE_DIR = process.env.MUSIKE_CACHE_DIR = path.join(userData, "cache");
+process.env.LISTENMUSIC_BIN_DIR = process.env.MUSIKE_BIN_DIR = path.join(userData, "bin");
+process.env.LISTENMUSIC_WEB_DIST = process.env.MUSIKE_WEB_DIST = app.isPackaged ? path.join(process.resourcesPath, "web") : path.resolve(here, "..", "..", "web", "dist");
 
 // A copy of the library from before each update, in userData/backups (the installer makes one too).
 backupLibraryOnUpdate(userData, app.getVersion());
@@ -114,7 +114,7 @@ function createMainWindow(url: string): BrowserWindow {
     minWidth: 380,
     minHeight: 560,
     show: false,
-    title: "Musike",
+    title: "ListenMusic",
     icon: path.join(here, "icon.png"),
     backgroundColor: THEME.dark.color,
     // Our own title bar (drawn by the web app) with the native window buttons on top of it:
@@ -183,14 +183,17 @@ async function launch() {
   mainWindow.once("ready-to-show", () => splash.destroy());
 }
 
-ipcMain.on("musike:theme", (event, theme: "dark" | "light") => {
+const onTheme = (event: Electron.IpcMainEvent, theme: "dark" | "light") => {
   const win = BrowserWindow.fromWebContents(event.sender);
   const colors = THEME[theme] ?? THEME.dark;
   if (!isMac) win?.setTitleBarOverlay({ ...colors, height: TITLEBAR_HEIGHT });
   win?.setBackgroundColor(colors.color);
-});
+};
 
-ipcMain.on("musike:lang", (_event, next: unknown) => {
+ipcMain.on("listenmusic:theme", onTheme);
+ipcMain.on("musike:theme", onTheme);
+
+const onLang = (_event: Electron.IpcMainEvent, next: unknown) => {
   if (!isLang(next) || next === lang) return;
   lang = next;
   try {
@@ -198,14 +201,20 @@ ipcMain.on("musike:lang", (_event, next: unknown) => {
   } catch {
     /* not critical: the splash falls back to English */
   }
-});
+};
 
-ipcMain.on("musike:retry", (event) => {
+ipcMain.on("listenmusic:lang", onLang);
+ipcMain.on("musike:lang", onLang);
+
+const onRetry = (event: Electron.IpcMainEvent) => {
   const failed = BrowserWindow.fromWebContents(event.sender);
   // Open the new splash before closing the old one, or "window-all-closed" would quit the app.
   void launch();
   failed?.destroy();
-});
+};
+
+ipcMain.on("listenmusic:retry", onRetry);
+ipcMain.on("musike:retry", onRetry);
 
 app.on("second-instance", () => {
   if (!mainWindow) return;

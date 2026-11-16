@@ -1,5 +1,5 @@
 {
-  "name": "musike",
+  "name": "listenmusic",
   "private": true,
   "version": "1.5.1",
   "type": "module",
@@ -7,8 +7,9 @@
     "dev": "pnpm --parallel --filter ./server --filter ./web dev",
     "build": "pnpm --filter ./web build",
     "start": "pnpm --filter ./server start",
-    "desktop": "pnpm --filter musike-desktop start",
-    "installer": "pnpm --filter musike-desktop dist",
+    "desktop": "pnpm --filter listenmusic-desktop start",
+    "installer": "pnpm --filter listenmusic-desktop dist",
+    "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r typecheck"
   },
   "packageManager": "pnpm@10.14.0"

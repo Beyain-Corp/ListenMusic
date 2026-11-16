@@ -30,7 +30,7 @@ final class MusikeYouTube: NSObject, WKScriptMessageHandler {
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "musikeResolve",
+        guard message.name == "listenmusicResolve" || message.name == "musikeResolve",
               let body = message.body as? [String: Any],
               let request = body["req"] as? Int,
               let id = body["id"] as? String
@@ -44,7 +44,7 @@ final class MusikeYouTube: NSObject, WKScriptMessageHandler {
                 guard let json = try? JSONSerialization.data(withJSONObject: payload),
                       let text = String(data: json, encoding: .utf8)
                 else { return }
-                self?.webView?.evaluateJavaScript("window.__musikeResolve && window.__musikeResolve(\(request), \(text))")
+                self?.webView?.evaluateJavaScript("(window.__listenmusicResolve || window.__musikeResolve) && (window.__listenmusicResolve || window.__musikeResolve)(\(request), \(text))")
             }
         }
     }

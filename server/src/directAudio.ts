@@ -1,3 +1,4 @@
+import { config } from "./config.js";
 import type { Lang } from "./i18n.js";
 import { text, withClient } from "./search.js";
 
@@ -12,7 +13,8 @@ import { text, withClient } from "./search.js";
  */
 
 export const DEFAULT_CLIENTS = ["VISIONOS"];
-const REMOTE_CONFIG = "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json";
+export const DEFAULT_REMOTE_CONFIG = "https://raw.githubusercontent.com/Ernani1234/listenmusic/main/mobile/streaming.json";
+export const LEGACY_REMOTE_CONFIG = "https://raw.githubusercontent.com/Ernani1234/musike/main/mobile/streaming.json";
 
 export interface DirectAudio {
   url: string;
@@ -30,11 +32,22 @@ export const validClients = (v: unknown): string[] | null =>
  * The client list published in the repository, or null when it can't be read. `clients` is the list for the server
  * and Android; a platform can have its own (`ios`).
  */
-export async function fetchRemoteClients(key: "clients" | "ios" = "clients"): Promise<string[] | null> {
+export async function fetchRemoteClients(
+  key: "clients" | "ios" = "clients",
+  url = config.streamingUrl ?? DEFAULT_REMOTE_CONFIG,
+): Promise<string[] | null> {
   try {
-    const res = await fetch(REMOTE_CONFIG, { signal: AbortSignal.timeout(6000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     return validClients(((await res.json()) as Record<string, unknown>)[key]);
   } catch {
+    if (!config.streamingUrl && url !== LEGACY_REMOTE_CONFIG) {
+      try {
+        const legacyRes = await fetch(LEGACY_REMOTE_CONFIG, { signal: AbortSignal.timeout(6000) });
+        return validClients(((await legacyRes.json()) as Record<string, unknown>)[key]);
+      } catch {
+        /* fallback */
+      }
+    }
     return null; // offline or no config: keep what we have
   }
 }

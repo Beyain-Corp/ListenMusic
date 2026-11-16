@@ -35,7 +35,7 @@ final class MusikeAudio: NSObject, WKScriptMessageHandler {
     // MARK: - What the web app sends
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "musikeAudio",
+        guard message.name == "listenmusicAudio" || message.name == "musikeAudio",
               let body = message.body as? [String: Any],
               let command = body["cmd"] as? String
         else { return }
@@ -164,7 +164,7 @@ final class MusikeAudio: NSObject, WKScriptMessageHandler {
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
               let json = String(data: data, encoding: .utf8)
         else { return }
-        let js = "window.__musikeAudioEvent && window.__musikeAudioEvent('\(event)', \(json))"
+        let js = "(window.__listenmusicAudioEvent || window.__musikeAudioEvent) && (window.__listenmusicAudioEvent || window.__musikeAudioEvent)('\(event)', \(json))"
         if Thread.isMainThread {
             webView?.evaluateJavaScript(js)
         } else {

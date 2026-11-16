@@ -78,7 +78,7 @@ let pendingSeek = 0;
 let token = 0;
 let recordedToken = -1;
 
-const STORAGE_KEY = "musike:player";
+const STORAGE_KEY = "listenmusic:player";
 
 interface Saved {
   queue: Track[];
@@ -96,7 +96,8 @@ interface Saved {
 
 function readSaved(): Partial<Saved> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as Partial<Saved>;
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("musike:player");
+    return JSON.parse(raw ?? "{}") as Partial<Saved>;
   } catch {
     return {};
   }

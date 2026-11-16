@@ -62,8 +62,8 @@ final class MusikePlayback: NSObject, WKScriptMessageHandler {
     }
 
     private func send(_ action: String, position: Double? = nil) {
-        var js = "window.__musikeMediaAction && window.__musikeMediaAction('\(action)')"
-        if let position { js = "window.__musikeMediaAction && window.__musikeMediaAction('\(action)', \(position))" }
+        let actionParam = position != nil ? "'\(action)', \(position!)" : "'\(action)'"
+        let js = "(window.__listenmusicMediaAction || window.__musikeMediaAction) && (window.__listenmusicMediaAction || window.__musikeMediaAction)(\(actionParam))"
         DispatchQueue.main.async { [weak self] in
             self?.webView?.evaluateJavaScript(js)
         }
@@ -72,7 +72,7 @@ final class MusikePlayback: NSObject, WKScriptMessageHandler {
     // MARK: - What the web app sends
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "musikeMedia",
+        guard message.name == "listenmusicMedia" || message.name == "musikeMedia",
               let body = message.body as? [String: Any],
               let type = body["type"] as? String
         else { return }

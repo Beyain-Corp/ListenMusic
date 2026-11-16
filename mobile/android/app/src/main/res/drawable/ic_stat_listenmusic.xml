@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ListenMusic's logo for the status bar: Android draws it in a single color. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Headband arc -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M 4.5,12.5 C 4.5,7.8 7.8,4.5 12,4.5 C 16.2,4.5 19.5,7.8 19.5,12.5" />
+    <!-- Ear cups -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 3.2,11 h 2.6 c 0.8,0 1.4,0.6 1.4,1.4 v 4.2 c 0,0.8 -0.6,1.4 -1.4,1.4 H 3.2 c -0.8,0 -1.4,-0.6 -1.4,-1.4 v -4.2 c 0,-0.8 0.6,-1.4 1.4,-1.4 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 18.2,11 h 2.6 c 0.8,0 1.4,0.6 1.4,1.4 v 4.2 c 0,0.8 -0.6,1.4 -1.4,1.4 h -2.6 c -0.8,0 -1.4,-0.6 -1.4,-1.4 v -4.2 c 0,-0.8 0.6,-1.4 1.4,-1.4 z" />
+    <!-- Equalizer bars -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 8.2,10.5 h 1.6 c 0.5,0 0.9,0.4 0.9,0.9 v 6.2 c 0,0.5 -0.4,0.9 -0.9,0.9 H 8.2 c -0.5,0 -0.9,-0.4 -0.9,-0.9 v -6.2 c 0,-0.5 0.4,-0.9 0.9,-0.9 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 11.2,7.5 h 1.6 c 0.5,0 0.9,0.4 0.9,0.9 v 10.2 c 0,0.5 -0.4,0.9 -0.9,0.9 h -1.6 c -0.5,0 -0.9,-0.4 -0.9,-0.9 V 8.4 c 0,-0.5 0.4,-0.9 0.9,-0.9 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M 14.2,9.5 h 1.6 c 0.5,0 0.9,0.4 0.9,0.9 v 7.2 c 0,0.5 -0.4,0.9 -0.9,0.9 h -1.6 c -0.5,0 -0.9,-0.4 -0.9,-0.9 V 10.4 c 0,-0.5 0.4,-0.9 0.9,-0.9 z" />
+</vector>

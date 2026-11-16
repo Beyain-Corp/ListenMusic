@@ -65,8 +65,12 @@ export default function App() {
       const latest = info.ytdlp.latest[info.ytdlp.channel];
       if (info.ytdlp.updateAvailable && latest) {
         try {
-          if (sessionStorage.getItem("musike:update-notice") === latest) return;
-          sessionStorage.setItem("musike:update-notice", latest);
+          if (
+            sessionStorage.getItem("listenmusic:update-notice") === latest ||
+            sessionStorage.getItem("musike:update-notice") === latest
+          )
+            return;
+          sessionStorage.setItem("listenmusic:update-notice", latest);
         } catch {
           /* private mode */
         }

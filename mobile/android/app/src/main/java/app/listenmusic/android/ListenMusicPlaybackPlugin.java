@@ -1,4 +1,4 @@
-package app.musike.android;
+package app.listenmusic.android;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -13,8 +13,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
  * The app's side of PlaybackService (web/src/native/media.ts): the player reports the track and its progress
  * through update(), and the buttons pressed outside the app come back as "action" events.
  */
-@CapacitorPlugin(name = "MusikePlayback")
-public class MusikePlaybackPlugin extends Plugin {
+@CapacitorPlugin(name = "ListenMusicPlayback")
+public class ListenMusicPlaybackPlugin extends Plugin {
 
     private final Handler main = new Handler(Looper.getMainLooper());
 
@@ -52,15 +52,8 @@ public class MusikePlaybackPlugin extends Plugin {
             if (artwork != null) state.artwork = artwork;
             if (playing != null) state.playing = playing;
             if (duration != null) state.durationMs = Math.max(0, Math.round(duration * 1000));
-            else if (title != null) state.durationMs = 0; // a new track, not loaded yet
-            PlaybackService.refresh(getContext());
+            PlaybackService.ensure(getContext());
         });
         call.resolve();
-    }
-
-    @Override
-    protected void handleOnDestroy() {
-        PlaybackService.listener = null;
-        PlaybackService.shutdown(getContext());
     }
 }

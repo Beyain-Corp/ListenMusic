@@ -1,4 +1,4 @@
-# Musike: Design System
+# ListenMusic: Design System
 
 ## Design read
 
@@ -10,8 +10,8 @@ Dials (`design-taste-frontend`): `DESIGN_VARIANCE 4` (app, previsível para o po
 
 - **Categoria:** player pessoal, cultural/gamer-adjacent.
 - **Promessa:** sua música, sem interrupção.
-- **Metáfora:** o equalizador. Três barras (alta, baixa, alta) formam um **M** com a silhueta de um medidor de áudio.
-- **Sistema:** a marca e o indicador "tocando agora" são o mesmo objeto. O logo parado é a marca. As barras animadas na faixa ativa são a marca viva.
+- **Metáfora:** fones de ouvido abraçando um equalizador de áudio dinâmico ("Listen" + "Music").
+- **Sistema:** a marca e o indicador "tocando agora" conversam harmonicamente. O logo parado é a marca com fones e equalizador. As barras animadas na faixa ativa são a marca viva.
 - **Tagline:** "Sem interrupção."
 
 ## Cor

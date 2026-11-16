@@ -9,7 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LANGUAGES, useI18n, useT, type Lang } from "../i18n";
-import { capabilities, type Channel } from "../lib/api";
+import { capabilities, getAuthToken, setAuthToken, type Channel } from "../lib/api";
 import { cn } from "../lib/format";
 import { useSystem } from "../stores/system";
 import { useUi } from "../stores/ui";
@@ -155,6 +155,23 @@ export function SettingsDialog() {
         <LayoutSection />
 
         <BackupSection />
+
+        <section className="flex flex-col gap-2">
+          <h3 className="text-xs font-medium text-fg-3">Security & Access</h3>
+          <div className="flex flex-col gap-2 rounded-[16px] bg-surface-1 p-4 ring-1 ring-line">
+            <label className="text-xs text-fg-2">Server Auth Token (LISTENMUSIC_AUTH_TOKEN)</label>
+            <div className="flex gap-2">
+              <input
+                type="password"
+                defaultValue={getAuthToken() ?? ""}
+                placeholder="Optional token"
+                onBlur={(e) => setAuthToken(e.target.value.trim() || null)}
+                className="flex-1 rounded-xl bg-surface-2 px-3 py-1.5 text-sm font-mono text-fg outline-none ring-1 ring-line focus:ring-accent"
+              />
+            </div>
+            <p className="text-[11px] text-fg-3">Required only if your ListenMusic server is configured with LISTENMUSIC_AUTH_TOKEN.</p>
+          </div>
+        </section>
 
         {capabilities.engineSettings && (
         <section className="flex flex-col gap-3">

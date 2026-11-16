@@ -13,14 +13,15 @@ export const LANGUAGES: { id: Lang; name: string }[] = [
 ];
 
 const MESSAGES: Record<Lang, Messages> = { en, "pt-BR": pt };
-const KEY = "musike:lang";
+const KEY = "listenmusic:lang";
+const LEGACY_KEY = "musike:lang";
 
 export const isLang = (v: unknown): v is Lang => v === "en" || v === "pt-BR";
 
-/** Musike speaks English until the user picks another language in Settings. */
+/** ListenMusic speaks English until the user picks another language in Settings. */
 function readLang(): Lang {
   try {
-    const saved = localStorage.getItem(KEY);
+    const saved = localStorage.getItem(KEY) ?? localStorage.getItem(LEGACY_KEY);
     if (isLang(saved)) return saved;
   } catch {
     /* private mode */

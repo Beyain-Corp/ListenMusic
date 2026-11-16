@@ -24,7 +24,7 @@ export const DEFAULT_APPEARANCE: Appearance = {
   homeFavorites: true,
 };
 
-/** Ready-made accents. "volt" is Musike's own. */
+/** Ready-made accents. "volt" is ListenMusic's own. */
 export const ACCENTS = [
   { id: "volt", color: DEFAULT_ACCENT },
   { id: "mint", color: "#34d399" },
@@ -36,9 +36,9 @@ export const ACCENTS = [
   { id: "amber", color: "#fbbf24" },
 ] as const;
 
-const KEY = "musike:appearance";
+const KEY = "listenmusic:appearance";
 // The accent CSS itself, so index.html can apply it before the app loads (no flash of the default colour).
-const CSS_KEY = "musike:accent-css";
+const CSS_KEY = "listenmusic:accent-css";
 
 /** Keeps only known keys with the right types: the value may come from an old version or a backup file. */
 export function cleanAppearance(input: unknown): Appearance {
@@ -53,7 +53,8 @@ export function cleanAppearance(input: unknown): Appearance {
 
 function read(): Appearance {
   try {
-    return cleanAppearance(JSON.parse(localStorage.getItem(KEY) ?? "{}"));
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem("musike:appearance");
+    return cleanAppearance(JSON.parse(raw ?? "{}"));
   } catch {
     return { ...DEFAULT_APPEARANCE };
   }
@@ -63,9 +64,10 @@ function read(): Appearance {
 function apply(a: Appearance) {
   const root = document.documentElement;
   const custom = a.accent !== DEFAULT_ACCENT;
-  let style = document.getElementById("musike-accent");
+  let style = document.getElementById("listenmusic-accent") ?? document.getElementById("musike-accent");
   if (custom) {
-    style ??= Object.assign(document.createElement("style"), { id: "musike-accent" });
+    style ??= Object.assign(document.createElement("style"), { id: "listenmusic-accent" });
+    style.id = "listenmusic-accent";
     style.textContent = accentCss(a.accent);
     document.head.appendChild(style);
   } else {

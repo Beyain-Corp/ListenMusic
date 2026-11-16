@@ -1,4 +1,4 @@
-package app.musike.android;
+package app.listenmusic.android;
 
 import android.app.UiModeManager;
 import android.content.Context;
@@ -11,8 +11,8 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
 /** What kind of device the app runs on (web/src/native/android.ts): the same APK serves phones and Android TV. */
-@CapacitorPlugin(name = "MusikeDevice")
-public class MusikeDevicePlugin extends Plugin {
+@CapacitorPlugin(name = "ListenMusicDevice")
+public class ListenMusicDevicePlugin extends Plugin {
 
     @PluginMethod
     public void info(PluginCall call) {

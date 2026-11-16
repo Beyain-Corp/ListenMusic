@@ -17,27 +17,42 @@ interface MessageBridge {
   postMessage(message: unknown): void;
 }
 
-const bridge = (
-  globalThis as { webkit?: { messageHandlers?: { musikeResolve?: MessageBridge } } }
-).webkit?.messageHandlers?.musikeResolve;
+const nativeHandlers = (
+  globalThis as {
+    webkit?: {
+      messageHandlers?: {
+        listenmusicResolve?: MessageBridge;
+        musikeResolve?: MessageBridge;
+      };
+    };
+  }
+).webkit?.messageHandlers;
+const bridge = nativeHandlers?.listenmusicResolve ?? nativeHandlers?.musikeResolve;
 
 export const nativeResolverAvailable = () => !!bridge && Capacitor.getPlatform() === "ios";
 
 const pending = new Map<number, (result: ResolveResult) => void>();
 let sequence = 0;
 
-(globalThis as { __musikeResolve?: (req: number, result: ResolveResult) => void }).__musikeResolve = (req, result) => {
+const onResolve = (req: number, result: ResolveResult) => {
   const done = pending.get(req);
   if (!done) return;
   pending.delete(req);
   done(result);
 };
 
+const host = globalThis as {
+  __listenmusicResolve?: (req: number, result: ResolveResult) => void;
+  __musikeResolve?: (req: number, result: ResolveResult) => void;
+};
+host.__listenmusicResolve = onResolve;
+host.__musikeResolve = onResolve;
+
 /** Asks the iOS side for a stream URL; rejects with the reason YouTube gave. */
 export function resolveNatively(videoId: string, lang: string, region: string): Promise<ResolveResult> {
   return new Promise((resolve, reject) => {
     if (!bridge) {
-      reject(new Error("musikeResolve bridge is missing"));
+      reject(new Error("listenmusicResolve bridge is missing"));
       return;
     }
     const req = ++sequence;

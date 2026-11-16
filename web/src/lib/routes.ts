@@ -15,7 +15,7 @@ export const paths = {
 /** Hash that opens the full-screen Now Playing sheet on phones (so Back closes it). */
 export const NOW_PLAYING_HASH = "now-playing";
 
-// Musike 1.1 and earlier used Portuguese addresses; bookmarks and installed shortcuts may still point there.
+// ListenMusic 1.1 and earlier used Portuguese addresses; bookmarks and installed shortcuts may still point there.
 const LEGACY_PATHS: [string, string][] = [
   ["/buscar/lista", paths.searchList],
   ["/buscar/genero/", "/search/genre/"],

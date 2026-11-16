@@ -1,6 +1,6 @@
 # Benchmark de UX: Spotify Web Player
 
-Observação passiva do web player público (`open.spotify.com`, deslogado, 12/10/2026) com o REA (`inspect_web_page`, árvore de acessibilidade) e screenshots via CDP em 1440×900 e 390×844. Nenhum código do Spotify foi descompilado ou copiado. O objetivo é entender padrões de interação e decidir o que adotar, adaptar ou evitar no Musike.
+Observação passiva do web player público (`open.spotify.com`, deslogado, 12/10/2026) com o REA (`inspect_web_page`, árvore de acessibilidade) e screenshots via CDP em 1440×900 e 390×844. Nenhum código do Spotify foi descompilado ou copiado. O objetivo é entender padrões de interação e decidir o que adotar, adaptar ou evitar no ListenMusic.
 
 ## Anatomia observada (desktop)
 
@@ -16,9 +16,9 @@ Cada card tem um botão "Tocar X" separado do card em si: clicar no card navega,
 
 ## Mobile web
 
-Em 390 px o Spotify não oferece um player utilizável: mostra "Abrir o app", um banner de Premium que ocupa metade da tela e um banner de cookies que cobre o resto. **Essa é a maior oportunidade do Musike:** uma experiência mobile web completa.
+Em 390 px o Spotify não oferece um player utilizável: mostra "Abrir o app", um banner de Premium que ocupa metade da tela e um banner de cookies que cobre o resto. **Essa é a maior oportunidade do ListenMusic:** uma experiência mobile web completa.
 
-## Decisões para o Musike
+## Decisões para o ListenMusic
 
 **Adotar**
 - Três zonas fixas no desktop: navegação à esquerda, conteúdo no centro, player embaixo. Painel direito alternável para Fila e Tocando agora (vídeo aparece aqui).
