@@ -18,11 +18,11 @@ console.log(`  yt-dlp:  ${tools.ytdlp ?? "NOT FOUND (install it from ListenMusic
 const diag = getCookieDiagnostic();
 if (!diag.loaded) {
   console.log(`  Cookies: None (Cloud/Datacenter IPs will face bot checks without cookies)`);
-} else if (diag.count === 0) {
-  console.log(`  Cookies: Warning (${diag.path}) - 0 cookies parsed! Ensure Netscape, JSON, or header format.`);
+} else if (!diag.loggedIn) {
+  console.log(`  Cookies: WARNING (${diag.path} - ${diag.count} cookies) -> ${diag.statusMessage}`);
 } else {
   console.log(
-    `  Cookies: Loaded (${diag.path} - ${diag.count} cookies, ${diag.loggedIn ? "authenticated session" : "visitor session only"})`,
+    `  Cookies: Loaded (${diag.path} - ${diag.count} cookies, authenticated session with LOGIN_INFO)`,
   );
 }
 if (!tools.deno) console.log(`  Deno:    not found (YouTube may fail without it)`);

@@ -217,13 +217,23 @@ export interface CookieDiagnostic {
   path: string | null;
   count: number;
   loggedIn: boolean;
+  hasLoginInfo: boolean;
   names: string[];
+  statusMessage: string;
 }
 
 export function getCookieDiagnostic(): CookieDiagnostic {
   const filePath = getCookiesFilePath();
   if (!filePath || !existsSync(filePath)) {
-    return { loaded: false, path: null, count: 0, loggedIn: false, names: [] };
+    return {
+      loaded: false,
+      path: null,
+      count: 0,
+      loggedIn: false,
+      hasLoginInfo: false,
+      names: [],
+      statusMessage: "No cookie file found. Required for datacenter IPs.",
+    };
   }
   try {
     const content = readFileSync(filePath, "utf-8");
@@ -238,19 +248,41 @@ export function getCookieDiagnostic(): CookieDiagnostic {
         if (name) names.add(name);
       }
     }
-    const loggedIn =
-      names.has("LOGIN_INFO") ||
-      names.has("SID") ||
-      names.has("__Secure-1PSID") ||
-      names.has("__Secure-3PSID");
+    const hasLoginInfo = names.has("LOGIN_INFO");
+    const hasSapisid =
+      names.has("SAPISID") ||
+      names.has("__Secure-3PAPISID") ||
+      names.has("__Secure-1PAPISID");
+    const loggedIn = hasLoginInfo && hasSapisid;
+    let statusMessage = "Valid authenticated YouTube session";
+    if (names.size === 0) {
+      statusMessage = "0 cookies parsed from file";
+    } else if (!hasLoginInfo) {
+      statusMessage =
+        "LOGIN_INFO is missing! Cookies appear to be from google.com instead of youtube.com. Export from https://www.youtube.com while logged in.";
+    } else if (!hasSapisid) {
+      statusMessage =
+        "SAPISID is missing! YouTube requires both LOGIN_INFO and SAPISID for authentication.";
+    }
+
     return {
       loaded: true,
       path: filePath,
       count: names.size,
       loggedIn,
+      hasLoginInfo,
       names: Array.from(names).slice(0, 15),
+      statusMessage,
     };
   } catch {
-    return { loaded: true, path: filePath, count: 0, loggedIn: false, names: [] };
+    return {
+      loaded: true,
+      path: filePath,
+      count: 0,
+      loggedIn: false,
+      hasLoginInfo: false,
+      names: [],
+      statusMessage: "Error reading cookie file",
+    };
   }
 }
