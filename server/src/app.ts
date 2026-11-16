@@ -3,7 +3,7 @@ import { createServer } from "node:net";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import { ALBUM_ID, album, ARTIST_ID, artist, GENRE_ID, genre, genreArtists, genres, searchAlbums } from "./browse.js";
-import { config, getCookiesFilePath } from "./config.js";
+import { config, getCookieDiagnostic, getCookiesFilePath } from "./config.js";
 import * as library from "./library.js";
 import { fileStorage } from "./libraryFile.js";
 import { findVideoFor, radio, search, suggestions } from "./search.js";
@@ -80,6 +80,7 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
   app.get("/api/health", async () => ({
     ok: true,
     cookies: !!getCookiesFilePath(),
+    diagnostic: getCookieDiagnostic(),
   }));
 
   // System: yt-dlp status and one-click update

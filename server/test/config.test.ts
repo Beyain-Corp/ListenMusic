@@ -62,5 +62,22 @@ describe("Config helpers", () => {
       assert.equal(out.includes("# This is an arbitrary comment"), false);
       assert.match(out, /\.youtube\.com\tTRUE\t\/\tTRUE\t1794854772\tSID\tsecret123/);
     });
+
+    it("converts JSON cookie arrays into Netscape format", () => {
+      const json = JSON.stringify([
+        { domain: ".youtube.com", name: "LOGIN_INFO", value: "tok123", httpOnly: true, secure: true },
+        { domain: ".youtube.com", name: "SID", value: "sid456", secure: false },
+      ]);
+      const out = normalizeNetscapeCookies(json);
+      assert.match(out, /#HttpOnly_\.youtube\.com\tTRUE\t\/\tTRUE\t\d+\tLOGIN_INFO\ttok123/);
+      assert.match(out, /\.youtube\.com\tTRUE\t\/\tFALSE\t\d+\tSID\tsid456/);
+    });
+
+    it("converts raw HTTP Cookie headers into Netscape format", () => {
+      const header = "LOGIN_INFO=afm123; SID=sid789; HSID=h123";
+      const out = normalizeNetscapeCookies(header);
+      assert.match(out, /\.youtube\.com\tTRUE\t\/\tTRUE\t\d+\tLOGIN_INFO\tafm123/);
+      assert.match(out, /\.youtube\.com\tTRUE\t\/\tTRUE\t\d+\tSID\tsid789/);
+    });
   });
 });

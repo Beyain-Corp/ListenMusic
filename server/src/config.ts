@@ -21,7 +21,47 @@ export function parseExtraArgs(raw: string | undefined): string[] {
 }
 
 export function normalizeNetscapeCookies(raw: string): string {
-  const lines = raw.split(/\r?\n/);
+  let text = raw.trim();
+  // Check if JSON cookie array (exported by Cookie-Editor / EditThisCookie)
+  if (text.startsWith("[") && text.endsWith("]")) {
+    try {
+      const items = JSON.parse(text);
+      if (Array.isArray(items) && items.length > 0 && items[0].name && items[0].value) {
+        const lines = ["# Netscape HTTP Cookie File", "# https://curl.se/docs/http-cookies.html", ""];
+        for (const item of items) {
+          const domain = item.domain || ".youtube.com";
+          const isSub = domain.startsWith(".") ? "TRUE" : "FALSE";
+          const path = item.path || "/";
+          const secure = item.secure ? "TRUE" : "FALSE";
+          const expiry = Math.floor(item.expirationDate || item.expiry || Date.now() / 1000 + 365 * 86400);
+          const prefix = item.httpOnly ? "#HttpOnly_" : "";
+          lines.push(`${prefix}${domain}\t${isSub}\t${path}\t${secure}\t${expiry}\t${item.name}\t${item.value}`);
+        }
+        return lines.join("\n") + "\n";
+      }
+    } catch {
+      /* not valid JSON */
+    }
+  }
+
+  // Check if raw HTTP Cookie header (e.g. "NAME1=val1; NAME2=val2")
+  if (!text.includes("\t") && text.includes("=") && text.includes(";")) {
+    const pairs = text.replace(/^cookie:\s*/i, "").split(";").map((p) => p.trim()).filter(Boolean);
+    const validPairs = pairs.map((p) => {
+      const eq = p.indexOf("=");
+      return eq > 0 ? [p.slice(0, eq).trim(), p.slice(eq + 1).trim()] : null;
+    }).filter(Boolean) as [string, string][];
+    if (validPairs.length > 1) {
+      const lines = ["# Netscape HTTP Cookie File", "# https://curl.se/docs/http-cookies.html", ""];
+      const expiry = Math.floor(Date.now() / 1000 + 365 * 86400);
+      for (const [name, val] of validPairs) {
+        lines.push(`.youtube.com\tTRUE\t/\tTRUE\t${expiry}\t${name}\t${val}`);
+      }
+      return lines.join("\n") + "\n";
+    }
+  }
+
+  const lines = text.split(/\r?\n/);
   const normalized: string[] = ["# Netscape HTTP Cookie File", "# https://curl.se/docs/http-cookies.html", ""];
   let hasValid = false;
   for (const line of lines) {
@@ -169,5 +209,48 @@ export function getCookieHeader(): string | undefined {
     return pairs.length > 0 ? pairs.join("; ") : undefined;
   } catch {
     return undefined;
+  }
+}
+
+export interface CookieDiagnostic {
+  loaded: boolean;
+  path: string | null;
+  count: number;
+  loggedIn: boolean;
+  names: string[];
+}
+
+export function getCookieDiagnostic(): CookieDiagnostic {
+  const filePath = getCookiesFilePath();
+  if (!filePath || !existsSync(filePath)) {
+    return { loaded: false, path: null, count: 0, loggedIn: false, names: [] };
+  }
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    const names = new Set<string>();
+    for (const rawLine of content.split("\n")) {
+      let line = rawLine.trim();
+      if (!line || (line.startsWith("#") && !line.startsWith("#HttpOnly_"))) continue;
+      if (line.startsWith("#HttpOnly_")) line = line.slice(10);
+      const parts = line.split(/\t+|\s{2,}/);
+      if (parts.length >= 7) {
+        const name = parts[5].trim();
+        if (name) names.add(name);
+      }
+    }
+    const loggedIn =
+      names.has("LOGIN_INFO") ||
+      names.has("SID") ||
+      names.has("__Secure-1PSID") ||
+      names.has("__Secure-3PSID");
+    return {
+      loaded: true,
+      path: filePath,
+      count: names.size,
+      loggedIn,
+      names: Array.from(names).slice(0, 15),
+    };
+  } catch {
+    return { loaded: true, path: filePath, count: 0, loggedIn: false, names: [] };
   }
 }

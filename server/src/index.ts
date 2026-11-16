@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { networkInterfaces } from "node:os";
 import path from "node:path";
 import { startServer } from "./app.js";
-import { config, getCookiesFilePath } from "./config.js";
+import { config, getCookieDiagnostic, getCookiesFilePath } from "./config.js";
 
 const { port, tools } = await startServer();
 
@@ -15,8 +15,16 @@ console.log(`  Local:   http://localhost:${port}`);
 for (const url of lan) console.log(`  Network: ${url}`);
 if (!existsSync(config.webDist)) console.log(`  (web app not built: run "pnpm build" or use "pnpm dev")`);
 console.log(`  yt-dlp:  ${tools.ytdlp ?? "NOT FOUND (install it from ListenMusic's Settings)"}`);
-const cookies = getCookiesFilePath();
-console.log(`  Cookies: ${cookies ? `Loaded (${cookies})` : "None (Cloud/Datacenter IPs will face bot checks without cookies)"}`);
+const diag = getCookieDiagnostic();
+if (!diag.loaded) {
+  console.log(`  Cookies: None (Cloud/Datacenter IPs will face bot checks without cookies)`);
+} else if (diag.count === 0) {
+  console.log(`  Cookies: Warning (${diag.path}) - 0 cookies parsed! Ensure Netscape, JSON, or header format.`);
+} else {
+  console.log(
+    `  Cookies: Loaded (${diag.path} - ${diag.count} cookies, ${diag.loggedIn ? "authenticated session" : "visitor session only"})`,
+  );
+}
 if (!tools.deno) console.log(`  Deno:    not found (YouTube may fail without it)`);
 if (!tools.ffmpeg) console.log(`  FFmpeg:  not found (HD video unavailable)`);
 console.log(`  Data:    ${path.relative(process.cwd(), config.dataDir) || config.dataDir}\n`);
