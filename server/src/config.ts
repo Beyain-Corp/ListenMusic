@@ -42,18 +42,33 @@ export const config = {
  * in YTDLP_EXTRA_ARGS, or if cookies.txt exists in the data directory or app root.
  */
 export function getCookiesFilePath(): string | null {
-  const envCookies = process.env.YOUTUBE_COOKIES ?? process.env.COOKIES_CONTENT;
+  const envCookies = process.env.YOUTUBE_COOKIES ?? process.env.COOKIES_CONTENT ?? process.env.COOKIES_DATA;
   if (envCookies) {
     const tmpEnvCookie = path.join(os.tmpdir(), "listenmusic-env-cookies.txt");
     try {
       let content = envCookies.trim();
-      if (content.startsWith("ey") || (!content.includes("\t") && !content.includes("#"))) {
+      // Unwrap surrounding quotes if any
+      if ((content.startsWith('"') && content.endsWith('"')) || (content.startsWith("'") && content.endsWith("'"))) {
+        content = content.slice(1, -1).trim();
+      }
+      // Check if base64 encoded
+      if (
+        (content.startsWith("ey") || !content.includes("\t")) &&
+        /^[A-Za-z0-9+/=\s]+$/.test(content)
+      ) {
         try {
-          const decoded = Buffer.from(content, "base64").toString("utf-8");
+          const decoded = Buffer.from(content.replace(/\s+/g, ""), "base64").toString("utf-8");
           if (decoded.includes("\t") || decoded.includes("#")) content = decoded;
         } catch {
           /* not base64 */
         }
+      }
+      // Unescape literal \r\n, \n and \t from web environment inputs
+      if (content.includes("\\n")) {
+        content = content.replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
+      }
+      if (content.includes("\\t")) {
+        content = content.replace(/\\t/g, "\t");
       }
       writeFileSync(tmpEnvCookie, content, { encoding: "utf-8", mode: 0o666 });
       return tmpEnvCookie;
@@ -64,10 +79,12 @@ export function getCookiesFilePath(): string | null {
   for (let i = 0; i < config.ytdlpExtraArgs.length; i++) {
     const arg = config.ytdlpExtraArgs[i];
     if (arg === "--cookies" && i + 1 < config.ytdlpExtraArgs.length) {
-      return config.ytdlpExtraArgs[i + 1];
+      const p = config.ytdlpExtraArgs[i + 1];
+      if (existsSync(p)) return p;
     }
     if (arg.startsWith("--cookies=")) {
-      return arg.slice(10);
+      const p = arg.slice(10);
+      if (existsSync(p)) return p;
     }
   }
   const dataCookie = path.join(config.dataDir, "cookies.txt");

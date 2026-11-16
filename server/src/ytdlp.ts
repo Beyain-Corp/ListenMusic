@@ -66,6 +66,11 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
       if (idx !== -1 && idx + 1 < extraArgs.length) {
         extraArgs[idx + 1] = cookieFile;
       }
+    } else {
+      const idx = extraArgs.indexOf("--cookies");
+      if (idx !== -1 && idx + 1 < extraArgs.length) {
+        extraArgs.splice(idx, 2);
+      }
     }
     const hasCookiesArg = extraArgs.some((a) => a.includes("--cookies"));
     const cookieArgs = cookieFile && !hasCookiesArg ? ["--cookies", cookieFile] : [];
