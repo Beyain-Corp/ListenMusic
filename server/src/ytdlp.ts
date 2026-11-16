@@ -203,7 +203,7 @@ export function resolveStreams(id: string): Promise<Resolved> {
 
   const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
     ? []
-    : ["--extractor-args", "youtube:player_client=visionos,web;youtube:skip=hls"];
+    : ["--extractor-args", "youtube:player_client=visionos"];
 
   const job = run(
     ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
