@@ -14,12 +14,18 @@ permissions:
 jobs:
   image:
     runs-on: ubuntu-latest
+    env:
+      IMAGE: ""
     steps:
       - uses: actions/checkout@v4
 
       # Registry names must be lowercase (e.g. "musicplay").
       - name: Image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+        id: image
+        run: |
+          IMG="ghcr.io/${GITHUB_REPOSITORY,,}"
+          echo "IMAGE=$IMG" >> "$GITHUB_ENV"
+          echo "image=$IMG" >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -33,7 +39,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE }}
+          images: ${{ steps.image.outputs.image }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
