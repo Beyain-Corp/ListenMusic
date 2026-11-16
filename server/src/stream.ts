@@ -5,7 +5,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { directAudio } from "./directAudio.js";
 import { msg } from "./i18n.js";
 import { HttpError } from "./types.js";
-import { clientsForDirect, invalidate, resolveStreams, type StreamFormat } from "./ytdlp.js";
+import { clientsForDirect, invalidate, resolveStreams, resolveVideo, type StreamFormat } from "./ytdlp.js";
 
 const PASS_HEADERS = ["content-length", "content-range", "accept-ranges", "last-modified"];
 
@@ -16,10 +16,11 @@ const PASS_HEADERS = ["content-length", "content-range", "accept-ranges", "last-
 export async function proxyStream(req: FastifyRequest, reply: FastifyReply, id: string, kind: "audio" | "video") {
   const pick = async (fresh: boolean): Promise<StreamFormat> => {
     if (fresh) invalidate(id);
+    if (kind === "video") {
+      return resolveVideo(id);
+    }
     const resolved = await resolveStreams(id);
-    const fmt = kind === "audio" ? resolved.audio : resolved.video;
-    if (!fmt) throw new HttpError(404, msg("noSdVideo"));
-    return fmt;
+    return resolved.audio;
   };
 
   const controller = new AbortController();

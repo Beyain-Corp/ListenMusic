@@ -11,7 +11,7 @@ services:
       - listenmusic-cache:/cache # HD videos already downloaded
     environment:
       # Optional, see the README: cookies for YouTube's bot checks, region for search results, auth token.
-      YTDLP_EXTRA_ARGS: "-4 --cookies /data/cookies.txt --extractor-args youtube:player_client=tv_samsung"
+      YTDLP_EXTRA_ARGS: "-4 --cookies /data/cookies.txt --extractor-args youtube:player_client=tv_samsung;skip=hls,dash"
       # LISTENMUSIC_LOCATION: "US"
       # LISTENMUSIC_AUTH_TOKEN: "your-secret-token"
       LISTENMUSIC_CACHE_MAX_MB: "2048"

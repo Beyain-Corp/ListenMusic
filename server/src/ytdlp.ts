@@ -70,7 +70,9 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     const hasCookiesArg = extraArgs.some((a) => a.includes("--cookies"));
     const cookieArgs = cookieFile && !hasCookiesArg ? ["--cookies", cookieFile] : [];
     const ipv4Arg = extraArgs.some((a) => a === "-4" || a === "--force-ipv4" || a === "-6" || a === "--force-ipv6") ? [] : ["-4"];
-    const child = spawn(ytdlp, [...ipv4Arg, ...cookieArgs, ...extraArgs, ...args], { windowsHide: true, env });
+    const hasSkipArg = extraArgs.some((a) => a.includes("skip="));
+    const skipArgs = hasSkipArg ? [] : ["--extractor-args", "youtube:skip=hls,dash"];
+    const child = spawn(ytdlp, [...ipv4Arg, ...cookieArgs, ...skipArgs, ...extraArgs, ...args], { windowsHide: true, env });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -203,13 +205,13 @@ export function resolveStreams(id: string): Promise<Resolved> {
 
   const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
     ? []
-    : ["--extractor-args", "youtube:player_client=tv_samsung"];
+    : ["--extractor-args", "youtube:player_client=tv_samsung;skip=hls,dash"];
 
-  const job = run(
-    ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
-    RESOLVE_TIMEOUT_MS,
-  )
-    .then((stdout): Resolved => {
+  const resolveWithYtdlp = () =>
+    run(
+      ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
+      RESOLVE_TIMEOUT_MS,
+    ).then((stdout): Resolved => {
       const info = JSON.parse(stdout) as { title: string; duration?: number; formats: RawFormat[] };
       const audio = pickAudio(info.formats);
       if (!audio) throw new HttpError(404, msg("noAudio"));
@@ -222,8 +224,24 @@ export function resolveStreams(id: string): Promise<Resolved> {
         video: video ? toStream(video, "video") : undefined,
         expiresAt: expiryOf(audio.url!),
       };
-    })
-    .catch((err) => resolveDirect(id, err))
+    });
+
+  const job = (async (): Promise<Resolved> => {
+    // 1. Fast Path: Innertube directAudio (<1s vs 30-50s)
+    try {
+      const direct = await directAudio(id, await clientsForDirect());
+      return {
+        id,
+        title: direct.title,
+        duration: direct.duration,
+        audio: { formatId: "direct", url: direct.url, headers: {}, mime: direct.mime },
+        expiresAt: direct.expiresAt - 10 * 60_000,
+      };
+    } catch {
+      // 2. Fallback: yt-dlp with manifests skipped
+      return resolveWithYtdlp();
+    }
+  })()
     .then((resolved) => {
       resolvedAt.set(id, resolved);
       return resolved;
@@ -232,6 +250,26 @@ export function resolveStreams(id: string): Promise<Resolved> {
 
   cache.set(id, job);
   return job;
+}
+
+export async function resolveVideo(id: string): Promise<StreamFormat> {
+  const resolved = await resolveStreams(id);
+  if (resolved.video) return resolved.video;
+
+  const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
+    ? []
+    : ["--extractor-args", "youtube:player_client=tv_samsung;skip=hls,dash"];
+
+  const stdout = await run(
+    ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
+    RESOLVE_TIMEOUT_MS,
+  );
+  const info = JSON.parse(stdout) as { formats: RawFormat[] };
+  const video = pickVideo(info.formats);
+  if (!video) throw new HttpError(404, msg("noSdVideo"));
+  const fmt = toStream(video, "video");
+  resolved.video = fmt;
+  return fmt;
 }
 
 export function invalidate(id: string) {
