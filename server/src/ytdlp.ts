@@ -52,6 +52,14 @@ export function holdDuring<T>(job: Promise<T>): Promise<T> {
   return p;
 }
 
+function cleanArg(arg: string): string {
+  let a = arg.trim();
+  if ((a.startsWith('"') && a.endsWith('"')) || (a.startsWith("'") && a.endsWith("'"))) {
+    a = a.slice(1, -1).trim();
+  }
+  return a;
+}
+
 async function run(args: string[], timeoutMs: number): Promise<string> {
   if (maintenance) await maintenance.catch(() => {});
   const { ytdlp, env } = tools();
@@ -75,9 +83,22 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     const hasCookiesArg = extraArgs.some((a) => a.includes("--cookies"));
     const cookieArgs = cookieFile && !hasCookiesArg ? ["--cookies", cookieFile] : [];
     const ipv4Arg = extraArgs.some((a) => a === "-4" || a === "--force-ipv4" || a === "-6" || a === "--force-ipv6") ? [] : ["-4"];
-    const hasSkipArg = extraArgs.some((a) => a.includes("skip="));
-    const skipArgs = hasSkipArg ? [] : ["--extractor-args", "youtube:skip=hls,dash"];
-    const child = spawn(ytdlp, [...ipv4Arg, ...cookieArgs, ...skipArgs, ...extraArgs, ...args], { windowsHide: true, env });
+
+    const allArgs = [...extraArgs, ...args];
+    const hasPlayerClient = allArgs.some((a) => a.includes("player_client"));
+    const hasSkip = allArgs.some((a) => a.includes("skip="));
+
+    let defaultExtractorArgs: string[] = [];
+    if (!hasPlayerClient && !hasSkip) {
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=tv_samsung,web_embedded;skip=hls,dash"];
+    } else if (!hasPlayerClient) {
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=tv_samsung,web_embedded"];
+    } else if (!hasSkip) {
+      defaultExtractorArgs = ["--extractor-args", "youtube:skip=hls,dash"];
+    }
+
+    const finalArgs = [...ipv4Arg, ...cookieArgs, ...defaultExtractorArgs, ...extraArgs, ...args].map(cleanArg).filter(Boolean);
+    const child = spawn(ytdlp, finalArgs, { windowsHide: true, env });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -208,13 +229,9 @@ export function resolveStreams(id: string): Promise<Resolved> {
   const inflight = cache.get(id);
   if (inflight) return inflight;
 
-  const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
-    ? []
-    : ["--extractor-args", "youtube:player_client=tv_samsung;skip=hls,dash"];
-
   const resolveWithYtdlp = () =>
     run(
-      ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
+      ["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
       RESOLVE_TIMEOUT_MS,
     ).then((stdout): Resolved => {
       const info = JSON.parse(stdout) as { title: string; duration?: number; formats: RawFormat[] };
@@ -261,12 +278,8 @@ export async function resolveVideo(id: string): Promise<StreamFormat> {
   const resolved = await resolveStreams(id);
   if (resolved.video) return resolved.video;
 
-  const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
-    ? []
-    : ["--extractor-args", "youtube:player_client=tv_samsung;skip=hls,dash"];
-
   const stdout = await run(
-    ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
+    ["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
     RESOLVE_TIMEOUT_MS,
   );
   const info = JSON.parse(stdout) as { formats: RawFormat[] };

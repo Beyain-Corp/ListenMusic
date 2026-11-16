@@ -6,13 +6,43 @@ import path from "node:path";
 // Folder of the server package (bundled builds pass every path through env instead).
 const root = typeof import.meta.url === "string" ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..") : process.cwd();
 
+export function parseExtraArgs(raw: string | undefined): string[] {
+  if (!raw) return [];
+  const matches = raw.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
+  return matches
+    .map((arg) => {
+      let a = arg.trim();
+      if ((a.startsWith('"') && a.endsWith('"')) || (a.startsWith("'") && a.endsWith("'"))) {
+        a = a.slice(1, -1);
+      }
+      return a;
+    })
+    .filter(Boolean);
+}
+
+export function normalizeNetscapeCookies(raw: string): string {
+  const lines = raw.split(/\r?\n/);
+  const normalized: string[] = ["# Netscape HTTP Cookie File", "# https://curl.se/docs/http-cookies.html", ""];
+  let hasValid = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || (trimmed.startsWith("#") && !trimmed.startsWith("#HttpOnly_"))) continue;
+    const parts = trimmed.split(/\t+|\s{2,}/);
+    if (parts.length >= 7) {
+      hasValid = true;
+      normalized.push(parts.slice(0, 7).join("\t"));
+    }
+  }
+  return hasValid ? normalized.join("\n") + "\n" : raw;
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 4180),
   host: process.env.HOST ?? "0.0.0.0",
   /** Explicit yt-dlp executable. When unset it is located automatically (see tools.ts). */
   ytdlpPath: process.env.YTDLP_PATH || null,
   // Extra yt-dlp flags, e.g. YTDLP_EXTRA_ARGS="--cookies-from-browser firefox"
-  ytdlpExtraArgs: (process.env.YTDLP_EXTRA_ARGS ?? "").split(" ").filter(Boolean),
+  ytdlpExtraArgs: parseExtraArgs(process.env.YTDLP_EXTRA_ARGS),
   dataDir: process.env.LISTENMUSIC_DATA_DIR ?? process.env.MUSIKE_DATA_DIR ?? path.join(root, "data"),
   cacheDir: process.env.LISTENMUSIC_CACHE_DIR ?? process.env.MUSIKE_CACHE_DIR ?? path.join(root, "cache"),
   /** HD video cache limit; least recently played videos are evicted first. */
@@ -70,6 +100,7 @@ export function getCookiesFilePath(): string | null {
       if (content.includes("\\t")) {
         content = content.replace(/\\t/g, "\t");
       }
+      content = normalizeNetscapeCookies(content);
       writeFileSync(tmpEnvCookie, content, { encoding: "utf-8", mode: 0o666 });
       return tmpEnvCookie;
     } catch {
@@ -125,9 +156,10 @@ export function getCookieHeader(): string | undefined {
     const content = readFileSync(filePath, "utf-8");
     const pairs: string[] = [];
     for (const rawLine of content.split("\n")) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith("#")) continue;
-      const parts = line.split("\t");
+      let line = rawLine.trim();
+      if (!line || (line.startsWith("#") && !line.startsWith("#HttpOnly_"))) continue;
+      if (line.startsWith("#HttpOnly_")) line = line.slice(10);
+      const parts = line.split(/\t+|\s{2,}/);
       if (parts.length >= 7) {
         const name = parts[5].trim();
         const value = parts[6].trim();

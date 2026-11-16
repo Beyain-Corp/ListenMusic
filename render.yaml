@@ -8,6 +8,6 @@ services:
       - key: PORT
         value: 4180
       - key: YTDLP_EXTRA_ARGS
-        value: -4 --extractor-args youtube:player_client=tv_samsung;skip=hls,dash
+        value: -4 --extractor-args youtube:player_client=tv_samsung,web_embedded;skip=hls,dash
       - key: LISTENMUSIC_CACHE_MAX_MB
         value: 512
