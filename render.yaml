@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: listenmusic
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 4180
+      - key: YTDLP_EXTRA_ARGS
+        value: -4 --extractor-args youtube:player_client=tv_samsung;skip=hls,dash
+      - key: LISTENMUSIC_CACHE_MAX_MB
+        value: 512

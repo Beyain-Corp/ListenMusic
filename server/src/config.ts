@@ -1,4 +1,4 @@
-import { accessSync, constants, copyFileSync, existsSync, readFileSync } from "node:fs";
+import { accessSync, constants, copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -38,10 +38,29 @@ export const config = {
 };
 
 /**
- * Returns path to cookies file if provided explicitly in YTDLP_EXTRA_ARGS
- * or if cookies.txt exists in the data directory or app root.
+ * Returns path to cookies file if provided explicitly via YOUTUBE_COOKIES env var,
+ * in YTDLP_EXTRA_ARGS, or if cookies.txt exists in the data directory or app root.
  */
 export function getCookiesFilePath(): string | null {
+  const envCookies = process.env.YOUTUBE_COOKIES ?? process.env.COOKIES_CONTENT;
+  if (envCookies) {
+    const tmpEnvCookie = path.join(os.tmpdir(), "listenmusic-env-cookies.txt");
+    try {
+      let content = envCookies.trim();
+      if (content.startsWith("ey") || (!content.includes("\t") && !content.includes("#"))) {
+        try {
+          const decoded = Buffer.from(content, "base64").toString("utf-8");
+          if (decoded.includes("\t") || decoded.includes("#")) content = decoded;
+        } catch {
+          /* not base64 */
+        }
+      }
+      writeFileSync(tmpEnvCookie, content, { encoding: "utf-8", mode: 0o666 });
+      return tmpEnvCookie;
+    } catch {
+      /* fallback */
+    }
+  }
   for (let i = 0; i < config.ytdlpExtraArgs.length; i++) {
     const arg = config.ytdlpExtraArgs[i];
     if (arg === "--cookies" && i + 1 < config.ytdlpExtraArgs.length) {
