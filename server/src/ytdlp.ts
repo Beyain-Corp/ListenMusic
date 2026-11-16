@@ -69,7 +69,8 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     }
     const hasCookiesArg = extraArgs.some((a) => a.includes("--cookies"));
     const cookieArgs = cookieFile && !hasCookiesArg ? ["--cookies", cookieFile] : [];
-    const child = spawn(ytdlp, [...cookieArgs, ...extraArgs, ...args], { windowsHide: true, env });
+    const ipv4Arg = extraArgs.some((a) => a === "-4" || a === "--force-ipv4" || a === "-6" || a === "--force-ipv6") ? [] : ["-4"];
+    const child = spawn(ytdlp, [...ipv4Arg, ...cookieArgs, ...extraArgs, ...args], { windowsHide: true, env });
     let stdout = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -202,7 +203,7 @@ export function resolveStreams(id: string): Promise<Resolved> {
 
   const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
     ? []
-    : ["--extractor-args", "youtube:player_client=visionos,tv_samsung,web;youtube:skip=hls"];
+    : ["--extractor-args", "youtube:player_client=visionos,web;youtube:skip=hls"];
 
   const job = run(
     ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
