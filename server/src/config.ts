@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { accessSync, constants, copyFileSync, existsSync, readFileSync } from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -55,6 +56,27 @@ export function getCookiesFilePath(): string | null {
   const rootCookie = path.join(root, "cookies.txt");
   if (existsSync(rootCookie)) return rootCookie;
   return null;
+}
+
+/**
+ * Ensures yt-dlp has a writable cookie file so it never fails on exit with PermissionError [Errno 13].
+ * If the original cookie file is not writable by the current process user, it copies it to /tmp.
+ */
+export function getWritableCookiesFile(): string | null {
+  const file = getCookiesFilePath();
+  if (!file) return null;
+  try {
+    accessSync(file, constants.W_OK);
+    return file;
+  } catch {
+    const tmpCookie = path.join(os.tmpdir(), "listenmusic-cookies.txt");
+    try {
+      copyFileSync(file, tmpCookie);
+      return tmpCookie;
+    } catch {
+      return file;
+    }
+  }
 }
 
 /**
