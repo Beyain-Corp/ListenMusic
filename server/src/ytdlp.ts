@@ -38,7 +38,7 @@ interface RawFormat {
   available_at?: number;
 }
 
-const RESOLVE_TIMEOUT_MS = 60_000;
+const RESOLVE_TIMEOUT_MS = 120_000;
 const DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
 
 let maintenance: Promise<unknown> | null = null;
@@ -203,7 +203,7 @@ export function resolveStreams(id: string): Promise<Resolved> {
 
   const playerClientArg = config.ytdlpExtraArgs.some((a) => a.includes("player_client"))
     ? []
-    : ["--extractor-args", "youtube:player_client=visionos"];
+    : ["--extractor-args", "youtube:player_client=tv_samsung"];
 
   const job = run(
     ["-J", "--no-playlist", "--no-warnings", ...playerClientArg, `https://www.youtube.com/watch?v=${id}`],
