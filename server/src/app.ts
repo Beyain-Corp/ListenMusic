@@ -85,45 +85,6 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     extraArgs: config.ytdlpExtraArgs,
   }));
 
-  app.get("/api/debug/ytdlp/:id", async (req) => {
-    const id = videoId(req.params);
-    const { client, noCookies } = (req.query ?? {}) as { client?: string; noCookies?: string };
-    const { ytdlp, env } = tools();
-    if (!ytdlp) return { error: "no ytdlp" };
-    const cookieFile = noCookies ? null : getWritableCookiesFile();
-    const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
-    const clientArg = client
-      ? ["--extractor-args", `youtube:player_client=${client};skip=hls,dash`]
-      : config.ytdlpExtraArgs.length > 0
-        ? config.ytdlpExtraArgs
-        : ["--extractor-args", "youtube:player_client=web_embedded,android,web,tv_samsung;skip=hls,dash"];
-    const testArgs = [
-      "--verbose",
-      "--simulate",
-      "--no-warnings",
-      "-4",
-      ...cookieArgs,
-      ...clientArg,
-      `https://www.youtube.com/watch?v=${id}`,
-    ];
-    return new Promise((resolve) => {
-      const child = spawn(ytdlp, testArgs, { windowsHide: true, env });
-      let stdout = "";
-      let stderr = "";
-      child.stdout.on("data", (d) => (stdout += d));
-      child.stderr.on("data", (d) => (stderr += d));
-      child.on("close", (code) => {
-        resolve({
-          code,
-          stdout: stdout.slice(0, 10000),
-          stderr: stderr.slice(0, 10000),
-          cookieFile,
-          testArgs,
-        });
-      });
-    });
-  });
-
   // System: yt-dlp status and one-click update
 
   app.get("/api/system", (req) => systemInfo(langOf(req)));
