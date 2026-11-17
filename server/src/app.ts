@@ -85,6 +85,36 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     extraArgs: config.ytdlpExtraArgs,
   }));
 
+  app.get("/api/test-direct/:id", async (req) => {
+    const id = videoId(req.params);
+    const start = Date.now();
+    try {
+      const { directAudio, DEFAULT_CLIENTS } = await import("./directAudio.js");
+      const direct = await directAudio(id, DEFAULT_CLIENTS);
+      const directMs = Date.now() - start;
+      const t0 = Date.now();
+      const res = await fetch(direct.url, {
+        headers: {
+          Range: "bytes=0-1024",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+          Referer: "https://www.youtube.com/",
+        },
+      });
+      return {
+        ok: res.ok,
+        status: res.status,
+        headers: Object.fromEntries(res.headers.entries()),
+        directMs,
+        fetchMs: Date.now() - t0,
+        title: direct.title,
+        mime: direct.mime,
+        urlSample: direct.url.slice(0, 100),
+      };
+    } catch (e: any) {
+      return { error: e.message, ms: Date.now() - start };
+    }
+  });
+
   // System: yt-dlp status and one-click update
 
   app.get("/api/system", (req) => systemInfo(langOf(req)));
