@@ -68,7 +68,12 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
   }
   return new Promise((resolve, reject) => {
     const cookieFile = getWritableCookiesFile();
-    let extraArgs = [...config.ytdlpExtraArgs];
+    let extraArgs = [...config.ytdlpExtraArgs].map((a) => {
+      if (a.includes("player_client=tv_samsung") && !a.includes("web_embedded")) {
+        return a.replace("player_client=tv_samsung", "player_client=web_embedded,android,web,tv_samsung");
+      }
+      return a;
+    });
     if (cookieFile) {
       const idx = extraArgs.indexOf("--cookies");
       if (idx !== -1 && idx + 1 < extraArgs.length) {
