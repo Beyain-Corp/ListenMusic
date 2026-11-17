@@ -87,24 +87,30 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
 
   app.get("/api/test-direct/:id", async (req) => {
     const id = videoId(req.params);
-    const { client = "WEB" } = (req.query ?? {}) as { client?: string };
-    const start = Date.now();
-    try {
-      const { withClient } = await import("./search.js");
-      const info: any = await withClient((yt) => yt.getBasicInfo(id, { client: client as never }));
-      const status = info.playability_status;
-      return {
-        ok: status?.status === "OK",
-        status: status?.status,
-        reason: status?.reason,
-        client,
-        ms: Date.now() - start,
-        formats: (info.streaming_data?.formats ?? []).length,
-        adaptive: (info.streaming_data?.adaptive_formats ?? []).length,
-      };
-    } catch (e: any) {
-      return { error: e.message, client, ms: Date.now() - start };
-    }
+    const { ytdlp, env } = tools();
+    if (!ytdlp) return { error: "no ytdlp" };
+    const cookieFile = getWritableCookiesFile();
+    const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
+    
+    // Test yt-dlp -f 18 -g
+    const startG = Date.now();
+    const argsG = ["-4", ...cookieArgs, "--extractor-args", "youtube:player_client=web;skip=hls,dash", "-f", "18/ba/b", "-g", `https://www.youtube.com/watch?v=${id}`];
+    
+    return new Promise((resolve) => {
+      const child = spawn(ytdlp, argsG, { windowsHide: true, env });
+      let out = "";
+      let err = "";
+      child.stdout.on("data", (d) => (out += d));
+      child.stderr.on("data", (d) => (err += d));
+      child.on("close", (code) => {
+        resolve({
+          code,
+          ms: Date.now() - startG,
+          urlSample: out.trim().slice(0, 100),
+          err: err.slice(0, 300),
+        });
+      });
+    });
   });
 
   // System: yt-dlp status and one-click update
