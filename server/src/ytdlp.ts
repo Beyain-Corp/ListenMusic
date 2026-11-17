@@ -114,7 +114,7 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     child.on("close", (code) => {
       clearTimeout(timer);
       if (code === 0) return resolve(stdout);
-      console.error(`[yt-dlp exit ${code}]:\n${stderr}`);
+      console.error(`[yt-dlp exit ${code}] args=${JSON.stringify(finalArgs)}:\n${stderr}`);
       reject(toHttpError(stderr));
     });
   });

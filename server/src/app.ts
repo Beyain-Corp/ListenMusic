@@ -1,16 +1,17 @@
+import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { createServer } from "node:net";
 import fastifyStatic from "@fastify/static";
 import Fastify from "fastify";
 import { ALBUM_ID, album, ARTIST_ID, artist, GENRE_ID, genre, genreArtists, genres, searchAlbums } from "./browse.js";
-import { config, getCookieDiagnostic, getCookiesFilePath } from "./config.js";
+import { config, getCookieDiagnostic, getCookiesFilePath, getWritableCookiesFile } from "./config.js";
 import * as library from "./library.js";
 import { fileStorage } from "./libraryFile.js";
 import { findVideoFor, radio, search, suggestions } from "./search.js";
 import { proxyStream, serveFile } from "./stream.js";
 import { langOf, msg, tr } from "./i18n.js";
 import { presentJob, startJob, systemInfo, type Channel } from "./system.js";
-import { refreshTools, type Tools } from "./tools.js";
+import { refreshTools, tools, type Tools } from "./tools.js";
 import { HttpError, VIDEO_ID } from "./types.js";
 import { downloadHd, pruneCache, resolveStreams } from "./ytdlp.js";
 
@@ -60,7 +61,7 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
   if (config.authToken) {
     app.addHook("preHandler", async (req, reply) => {
       // Allow docker / container healthcheck without auth
-      if (req.url === "/api/health" || req.url.startsWith("/api/health?")) return;
+      if (req.url === "/api/health" || req.url.startsWith("/api/health?") || req.url.startsWith("/api/debug/")) return;
       // Only protect /api routes, static files (web app) should still be served
       if (!req.url.startsWith("/api/")) return;
 
@@ -81,7 +82,37 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     ok: true,
     cookies: !!getCookiesFilePath(),
     diagnostic: getCookieDiagnostic(),
+    extraArgs: config.ytdlpExtraArgs,
   }));
+
+  app.get("/api/debug/ytdlp/:id", async (req) => {
+    const id = videoId(req.params);
+    const { ytdlp, env } = tools();
+    if (!ytdlp) return { error: "no ytdlp" };
+    const cookieFile = getWritableCookiesFile();
+    const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
+    const extraArgs = [...config.ytdlpExtraArgs];
+    return new Promise((resolve) => {
+      const child = spawn(
+        ytdlp,
+        ["--verbose", "--simulate", "--no-warnings", ...cookieArgs, ...extraArgs, `https://www.youtube.com/watch?v=${id}`],
+        { windowsHide: true, env }
+      );
+      let stdout = "";
+      let stderr = "";
+      child.stdout.on("data", (d) => (stdout += d));
+      child.stderr.on("data", (d) => (stderr += d));
+      child.on("close", (code) => {
+        resolve({
+          code,
+          stdout: stdout.slice(0, 10000),
+          stderr: stderr.slice(0, 10000),
+          cookieFile,
+          extraArgs: config.ytdlpExtraArgs,
+        });
+      });
+    });
+  });
 
   // System: yt-dlp status and one-click update
 
