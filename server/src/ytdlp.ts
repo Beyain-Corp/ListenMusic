@@ -242,11 +242,11 @@ export function resolveStreams(id: string): Promise<Resolved> {
   const inflight = cache.get(id);
   if (inflight) return inflight;
 
-  const resolveWithYtdlp = () =>
-    run(
-      ["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
-      RESOLVE_TIMEOUT_MS,
-    ).then((stdout): Resolved => {
+  const job = run(
+    ["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
+    RESOLVE_TIMEOUT_MS,
+  )
+    .then((stdout): Resolved => {
       const info = JSON.parse(stdout) as { title: string; duration?: number; formats: RawFormat[] };
       const audio = pickAudio(info.formats);
       if (!audio) throw new HttpError(404, msg("noAudio"));
@@ -259,24 +259,8 @@ export function resolveStreams(id: string): Promise<Resolved> {
         video: video ? toStream(video, "video") : undefined,
         expiresAt: expiryOf(audio.url!),
       };
-    });
-
-  const job = (async (): Promise<Resolved> => {
-    // 1. Fast Path: Innertube directAudio (<1s vs 30-50s)
-    try {
-      const direct = await directAudio(id, await clientsForDirect());
-      return {
-        id,
-        title: direct.title,
-        duration: direct.duration,
-        audio: { formatId: "direct", url: direct.url, headers: {}, mime: direct.mime },
-        expiresAt: direct.expiresAt - 10 * 60_000,
-      };
-    } catch {
-      // 2. Fallback: yt-dlp with manifests skipped
-      return resolveWithYtdlp();
-    }
-  })()
+    })
+    .catch((err) => resolveDirect(id, err))
     .then((resolved) => {
       resolvedAt.set(id, resolved);
       return resolved;
