@@ -90,9 +90,9 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
 
     let defaultExtractorArgs: string[] = [];
     if (!hasPlayerClient && !hasSkip) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=tv_samsung,web_embedded,android;skip=hls,dash"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web_embedded,android,web,tv_samsung;skip=hls,dash"];
     } else if (!hasPlayerClient) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=tv_samsung,web_embedded,android"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web_embedded,android,web,tv_samsung"];
     } else if (!hasSkip) {
       defaultExtractorArgs = ["--extractor-args", "youtube:skip=hls,dash"];
     }
