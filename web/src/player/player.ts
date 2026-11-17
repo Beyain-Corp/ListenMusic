@@ -396,6 +396,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         set({ queue: tracks.slice(), original: null });
         load(start);
       }
+      const upcoming = get().queue[(get().shuffle ? 0 : start) + 1];
+      if (upcoming) api.prepare(upcoming.id).catch(() => {});
     },
 
     playTrack: (track) => {
@@ -409,6 +411,8 @@ export const usePlayer = create<PlayerState>((set, get) => {
         original: s.original ? [...s.original, track] : null,
       });
       load(insert);
+      const upcoming = get().queue[insert + 1];
+      if (upcoming) api.prepare(upcoming.id).catch(() => {});
     },
 
     playNext: (track) => {
@@ -419,6 +423,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
         queue: [...s.queue.slice(0, insert), track, ...s.queue.slice(insert)],
         original: s.original ? [...s.original, track] : null,
       });
+      api.prepare(track.id).catch(() => {});
       toast(getT().player.playsNext(track.title));
     },
 
@@ -426,6 +431,7 @@ export const usePlayer = create<PlayerState>((set, get) => {
       const s = get();
       if (!s.queue.length) return get().playList([track]);
       set({ queue: [...s.queue, track], original: s.original ? [...s.original, track] : null });
+      api.prepare(track.id).catch(() => {});
       toast(getT().player.addedToQueue(track.title));
     },
 

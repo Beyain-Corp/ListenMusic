@@ -93,6 +93,10 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
     const hasPlayerClient = allArgs.some((a) => a.includes("player_client"));
     const hasSkip = allArgs.some((a) => a.includes("skip="));
 
+    const cacheDir = path.join(config.cacheDir, "yt-dlp");
+    const hasCacheDir = allArgs.some((a) => a.includes("--cache-dir"));
+    const cacheArgs = hasCacheDir ? [] : ["--cache-dir", cacheDir];
+
     let defaultExtractorArgs: string[] = [];
     if (!hasPlayerClient && !hasSkip) {
       defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web;skip=hls,dash"];
@@ -102,7 +106,7 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
       defaultExtractorArgs = ["--extractor-args", "youtube:skip=hls,dash"];
     }
 
-    const finalArgs = [...ipv4Arg, ...cookieArgs, ...defaultExtractorArgs, ...extraArgs, ...args].map(cleanArg).filter(Boolean);
+    const finalArgs = [...ipv4Arg, ...cookieArgs, ...cacheArgs, ...defaultExtractorArgs, ...extraArgs, ...args].map(cleanArg).filter(Boolean);
     const child = spawn(ytdlp, finalArgs, { windowsHide: true, env });
     let stdout = "";
     let stderr = "";
@@ -161,9 +165,13 @@ function toStream(f: RawFormat, kind: "audio" | "video"): StreamFormat {
   return { formatId: f.format_id, url: f.url!, headers: f.http_headers ?? {}, mime };
 }
 
-function pickAudio(formats: RawFormat[]): RawFormat | undefined {
+function pickAudio(formats: RawFormat[], rootFormat?: RawFormat): RawFormat | undefined {
+  const allFormats = [...formats];
+  if (rootFormat && rootFormat.url && !allFormats.some((f) => f.format_id === rootFormat.format_id)) {
+    allFormats.unshift(rootFormat);
+  }
   const now = Math.floor(Date.now() / 1000);
-  const audio = formats.filter((f) => isAudioOnly(f) && isHttps(f));
+  const audio = allFormats.filter((f) => isAudioOnly(f) && isHttps(f));
   // Prefer formats ready right now (filters out formats delayed by YouTube pre-roll ad timers).
   const ready = audio.filter((f) => !f.available_at || f.available_at <= now);
   const pool = ready.length > 0 ? ready : audio;
@@ -177,7 +185,7 @@ function pickAudio(formats: RawFormat[]): RawFormat | undefined {
   if (bestAudio) return bestAudio;
 
   // Fallback to muxed stream containing audio (e.g. format 18: 360p MP4 + AAC) when SABR hides audio-only URLs
-  const muxed = formats.filter((f) => hasAudio(f) && isHttps(f));
+  const muxed = allFormats.filter((f) => hasAudio(f) && isHttps(f));
   const readyMuxed = muxed.filter((f) => !f.available_at || f.available_at <= now);
   const muxedPool = readyMuxed.length > 0 ? readyMuxed : muxed;
   return muxedPool.find((f) => f.format_id === "18") ?? muxedPool.sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0];
@@ -243,12 +251,32 @@ export function resolveStreams(id: string): Promise<Resolved> {
   if (inflight) return inflight;
 
   const job = run(
-    ["-J", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
+    ["-J", "-f", "140/ba/18", "--no-playlist", "--no-warnings", `https://www.youtube.com/watch?v=${id}`],
     RESOLVE_TIMEOUT_MS,
   )
     .then((stdout): Resolved => {
-      const info = JSON.parse(stdout) as { title: string; duration?: number; formats: RawFormat[] };
-      const audio = pickAudio(info.formats);
+      const info = JSON.parse(stdout) as {
+        title: string;
+        duration?: number;
+        formats: RawFormat[];
+        url?: string;
+        format_id?: string;
+        ext?: string;
+        acodec?: string;
+        vcodec?: string;
+        http_headers?: Record<string, string>;
+      };
+      const rootFormat: RawFormat | undefined = info.url
+        ? {
+            format_id: info.format_id ?? "best",
+            url: info.url,
+            ext: info.ext ?? "mp4",
+            acodec: info.acodec ?? "mp4a",
+            vcodec: info.vcodec ?? "none",
+            http_headers: info.http_headers,
+          }
+        : undefined;
+      const audio = pickAudio(info.formats, rootFormat);
       if (!audio) throw new HttpError(404, msg("noAudio"));
       const video = pickVideo(info.formats);
       return {

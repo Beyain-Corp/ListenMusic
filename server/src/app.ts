@@ -85,49 +85,6 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     extraArgs: config.ytdlpExtraArgs,
   }));
 
-  app.get("/api/benchmark", async (req) => {
-    const { ytdlp, env } = tools();
-    const { client = "android" } = (req.query ?? {}) as { client?: string };
-    const results: Record<string, any> = {};
-
-    const runCmd = (cmd: string, args: string[]) => {
-      const t0 = Date.now();
-      return new Promise<{ ms: number; code: number | null; out: string; err: string }>((resolve) => {
-        const child = spawn(cmd, args, { env });
-        let out = "";
-        let err = "";
-        child.stdout.on("data", (d) => (out += d));
-        child.stderr.on("data", (d) => (err += d));
-        child.on("close", (code) => {
-          resolve({ ms: Date.now() - t0, code, out: out.trim().slice(0, 100), err: err.trim().slice(0, 100) });
-        });
-      });
-    };
-
-    results.python3 = await runCmd("python3", ["--version"]);
-
-    if (ytdlp) {
-      const cookieFile = getWritableCookiesFile();
-      const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
-      const testId = "I__jQrwsXt8";
-
-      const args = [
-        "-4",
-        ...cookieArgs,
-        "--extractor-args",
-        `youtube:player_client=${client};skip=hls,dash`,
-        "--cache-dir",
-        "/cache/yt-dlp",
-        "-f",
-        "18/ba/b",
-        "-g",
-        `https://www.youtube.com/watch?v=${testId}`,
-      ];
-      results[client] = await runCmd(ytdlp, args);
-    }
-    return results;
-  });
-
   // System: yt-dlp status and one-click update
 
   app.get("/api/system", (req) => systemInfo(langOf(req)));

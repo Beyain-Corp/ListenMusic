@@ -28,23 +28,23 @@ FROM node:${NODE_VERSION}-bookworm-slim
 ARG TARGETARCH
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl unzip \
+  && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl unzip python3 python3-minimal \
   && rm -rf /var/lib/apt/lists/*
 
 # Official standalone builds of yt-dlp and Deno (Deno solves YouTube's player challenges for yt-dlp).
 # They live in a folder the app user owns, so "Update" in ListenMusic's Settings can replace yt-dlp.
 RUN set -eux; \
   case "$TARGETARCH" in \
-    arm64) ytdlp="yt-dlp_linux_aarch64"; deno="deno-aarch64-unknown-linux-gnu.zip" ;; \
-    *) ytdlp="yt-dlp_linux"; deno="deno-x86_64-unknown-linux-gnu.zip" ;; \
+    arm64) deno="deno-aarch64-unknown-linux-gnu.zip" ;; \
+    *) deno="deno-x86_64-unknown-linux-gnu.zip" ;; \
   esac; \
   mkdir -p /opt/listenmusic/bin; \
-  curl -fsSL -o /opt/listenmusic/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/$ytdlp"; \
+  curl -fsSL -o /opt/listenmusic/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"; \
   chmod +x /opt/listenmusic/bin/yt-dlp; \
   curl -fsSL -o /tmp/deno.zip "https://github.com/denoland/deno/releases/latest/download/$deno"; \
   unzip -q /tmp/deno.zip -d /opt/listenmusic/bin; \
   rm /tmp/deno.zip; \
-  mkdir -p /data /cache; \
+  mkdir -p /data /cache /cache/yt-dlp; \
   chown -R node:node /opt/listenmusic /data /cache
 
 WORKDIR /app
