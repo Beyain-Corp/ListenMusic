@@ -14,21 +14,21 @@ describe("Config helpers", () => {
       assert.deepEqual(parseExtraArgs("-4 --no-warnings"), ["-4", "--no-warnings"]);
     });
 
-    it("unwraps double-quoted arguments preserving inner content", () => {
+    it("unwraps double-quoted arguments and replaces legacy tv_samsung client", () => {
       const parsed = parseExtraArgs('-4 --extractor-args "youtube:player_client=tv_samsung;skip=hls,dash"');
       assert.deepEqual(parsed, [
         "-4",
         "--extractor-args",
-        "youtube:player_client=tv_samsung;skip=hls,dash",
+        "youtube:player_client=web;skip=hls,dash",
       ]);
     });
 
-    it("unwraps single-quoted arguments", () => {
-      const parsed = parseExtraArgs("-4 --extractor-args 'youtube:player_client=tv_samsung;skip=hls,dash'");
+    it("unwraps single-quoted arguments and preserves modern clients", () => {
+      const parsed = parseExtraArgs("-4 --extractor-args 'youtube:player_client=web_embedded,android;skip=hls,dash'");
       assert.deepEqual(parsed, [
         "-4",
         "--extractor-args",
-        "youtube:player_client=tv_samsung;skip=hls,dash",
+        "youtube:player_client=web_embedded,android;skip=hls,dash",
       ]);
     });
   });

@@ -8,7 +8,8 @@ const root = typeof import.meta.url === "string" ? path.resolve(path.dirname(fil
 
 export function parseExtraArgs(raw: string | undefined): string[] {
   if (!raw) return [];
-  const matches = raw.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
+  const sanitized = raw.replace(/player_client=tv_samsung/g, "player_client=web");
+  const matches = sanitized.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) ?? [];
   return matches
     .map((arg) => {
       let a = arg.trim();

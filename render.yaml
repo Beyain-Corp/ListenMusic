@@ -8,6 +8,6 @@ services:
       - key: PORT
         value: 4180
       - key: YTDLP_EXTRA_ARGS
-        value: -4 --extractor-args youtube:player_client=web,web_embedded,android;skip=hls,dash
+        value: -4 --extractor-args youtube:player_client=web;skip=hls,dash
       - key: LISTENMUSIC_CACHE_MAX_MB
         value: 512

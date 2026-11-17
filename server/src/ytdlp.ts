@@ -69,8 +69,8 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const cookieFile = getWritableCookiesFile();
     let extraArgs = [...config.ytdlpExtraArgs].map((a) => {
-      if (a.includes("player_client=tv_samsung")) {
-        return a.replace("player_client=tv_samsung", "player_client=web,web_embedded,android");
+      if (a.includes("player_client=tv_samsung") || a.includes("player_client=web,web_embedded,android")) {
+        return a.replace(/player_client=[^;]+/, "player_client=web");
       }
       return a;
     });
@@ -95,9 +95,9 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
 
     let defaultExtractorArgs: string[] = [];
     if (!hasPlayerClient && !hasSkip) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web,web_embedded,android;skip=hls,dash"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web;skip=hls,dash"];
     } else if (!hasPlayerClient) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web,web_embedded,android"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web"];
     } else if (!hasSkip) {
       defaultExtractorArgs = ["--extractor-args", "youtube:skip=hls,dash"];
     }
