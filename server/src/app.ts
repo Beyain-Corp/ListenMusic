@@ -87,30 +87,32 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
 
   app.get("/api/test-direct/:id", async (req) => {
     const id = videoId(req.params);
-    const { ytdlp, env } = tools();
-    if (!ytdlp) return { error: "no ytdlp" };
-    const cookieFile = getWritableCookiesFile();
-    const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
-    
-    // Test yt-dlp -f 18 -g
-    const startG = Date.now();
-    const argsG = ["-4", ...cookieArgs, "--extractor-args", "youtube:player_client=web;skip=hls,dash", "-f", "18/ba/b", "-g", `https://www.youtube.com/watch?v=${id}`];
-    
-    return new Promise((resolve) => {
-      const child = spawn(ytdlp, argsG, { windowsHide: true, env });
-      let out = "";
-      let err = "";
-      child.stdout.on("data", (d) => (out += d));
-      child.stderr.on("data", (d) => (err += d));
-      child.on("close", (code) => {
-        resolve({
-          code,
-          ms: Date.now() - startG,
-          urlSample: out.trim().slice(0, 100),
-          err: err.slice(0, 300),
-        });
+    const start = Date.now();
+    try {
+      const { directAudio } = await import("./directAudio.js");
+      const direct = await directAudio(id, ["VISIONOS", "IOS", "ANDROID"]);
+      const directMs = Date.now() - start;
+      const t0 = Date.now();
+      const res = await fetch(direct.url, {
+        headers: {
+          Range: "bytes=0-65535",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        },
       });
-    });
+      const chunk = await res.arrayBuffer();
+      return {
+        ok: res.ok,
+        status: res.status,
+        directMs,
+        fetchMs: Date.now() - t0,
+        bytes: chunk.byteLength,
+        mime: direct.mime,
+        title: direct.title,
+        urlSample: direct.url.slice(0, 100),
+      };
+    } catch (e: any) {
+      return { error: e.message, ms: Date.now() - start };
+    }
   });
 
   // System: yt-dlp status and one-click update
