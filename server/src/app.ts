@@ -85,34 +85,30 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     extraArgs: config.ytdlpExtraArgs,
   }));
 
-  app.get("/api/test-direct/:id", async (req) => {
-    const id = videoId(req.params);
-    const start = Date.now();
-    try {
-      const { directAudio } = await import("./directAudio.js");
-      const direct = await directAudio(id, ["VISIONOS", "IOS", "ANDROID"]);
-      const directMs = Date.now() - start;
+  app.get("/api/benchmark", async () => {
+    const { ytdlp, env } = tools();
+    const results: Record<string, any> = {};
+
+    const runCmd = (cmd: string, args: string[]) => {
       const t0 = Date.now();
-      const res = await fetch(direct.url, {
-        headers: {
-          Range: "bytes=0-65535",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
-        },
+      return new Promise<{ ms: number; code: number | null; out: string; err: string }>((resolve) => {
+        const child = spawn(cmd, args, { env });
+        let out = "";
+        let err = "";
+        child.stdout.on("data", (d) => (out += d));
+        child.stderr.on("data", (d) => (err += d));
+        child.on("close", (code) => {
+          resolve({ ms: Date.now() - t0, code, out: out.trim().slice(0, 100), err: err.trim().slice(0, 100) });
+        });
       });
-      const chunk = await res.arrayBuffer();
-      return {
-        ok: res.ok,
-        status: res.status,
-        directMs,
-        fetchMs: Date.now() - t0,
-        bytes: chunk.byteLength,
-        mime: direct.mime,
-        title: direct.title,
-        urlSample: direct.url.slice(0, 100),
-      };
-    } catch (e: any) {
-      return { error: e.message, ms: Date.now() - start };
+    };
+
+    results.node = await runCmd("node", ["-e", "console.log(1)"]);
+    results.deno = await runCmd("deno", ["eval", "console.log(1)"]);
+    if (ytdlp) {
+      results.ytdlpVersion = await runCmd(ytdlp, ["--version"]);
     }
+    return results;
   });
 
   // System: yt-dlp status and one-click update
