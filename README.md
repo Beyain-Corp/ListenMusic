@@ -364,7 +364,7 @@ Server environment variables (all optional; `LISTENMUSIC_*` preferred, `MUSIKE_*
 
 ## API
 
-Every route answers JSON. Errors look like `{ "error": "message", "code"?: "tool_missing" | "maybe_outdated" | "bot_check" }`, with the message in the language of the `x-listenmusic-lang` request header (`en` or `pt-BR`, `x-musike-lang` supported).
+Every route answers JSON. Errors look like `{ "error": "message", "code"?: "tool_missing" | "maybe_outdated" | "bot_check" }`, with the message in the language of the `x-listenmusic-lang` request header (`en` or `ta`, `x-musike-lang` supported).
 
 | Method | Route | Description |
 |---|---|---|
@@ -427,7 +427,7 @@ listenmusic/
 
 **Design:** the identity (the headphones + dynamic equalizer mark, the Volt color, Geist) and the layout rules are in [docs/design-system.md](docs/design-system.md). The UX study behind the layout is in [docs/ux-benchmark.md](docs/ux-benchmark.md).
 
-**Adding a language:** copy `web/src/i18n/pt.ts`, translate it (TypeScript fails the build if a key is missing), list it in `web/src/i18n/index.ts`, and add the server messages in `server/src/i18n.ts`.
+**Adding a language:** copy `web/src/i18n/ta.ts`, translate it (TypeScript fails the build if a key is missing), list it in `web/src/i18n/index.ts`, and add the server messages in `server/src/i18n.ts`.
 
 ## Troubleshooting
 

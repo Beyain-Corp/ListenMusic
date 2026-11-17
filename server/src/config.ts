@@ -96,7 +96,7 @@ export const config = {
   binDir: process.env.LISTENMUSIC_BIN_DIR ?? process.env.MUSIKE_BIN_DIR ?? null,
   /** YouTube Music language when a request doesn't say (the app always does). */
   lang: process.env.LISTENMUSIC_LANG ?? process.env.MUSIKE_LANG ?? "en",
-  location: process.env.LISTENMUSIC_LOCATION ?? process.env.MUSIKE_LOCATION ?? "BR",
+  location: process.env.LISTENMUSIC_LOCATION ?? process.env.MUSIKE_LOCATION ?? "IN",
   /** Optional auth token to protect the API when exposed to networks. */
   authToken: process.env.LISTENMUSIC_AUTH_TOKEN ?? process.env.MUSIKE_AUTH_TOKEN ?? null,
   /** URL to fetch updated YouTube clients list from. */

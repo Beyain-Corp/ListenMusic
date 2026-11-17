@@ -1,22 +1,22 @@
 import { create } from "zustand";
 import { desktop } from "../lib/desktop";
 import { en, type Messages } from "./en";
-import { pt } from "./pt";
+import { ta } from "./ta";
 
 export type { Messages };
-export type Lang = "en" | "pt-BR";
+export type Lang = "en" | "ta";
 
 /** Each language named in itself, as language pickers do. */
 export const LANGUAGES: { id: Lang; name: string }[] = [
   { id: "en", name: "English" },
-  { id: "pt-BR", name: "Português (Brasil)" },
+  { id: "ta", name: "தமிழ்" },
 ];
 
-const MESSAGES: Record<Lang, Messages> = { en, "pt-BR": pt };
+const MESSAGES: Record<Lang, Messages> = { en, ta };
 const KEY = "listenmusic:lang";
 const LEGACY_KEY = "musike:lang";
 
-export const isLang = (v: unknown): v is Lang => v === "en" || v === "pt-BR";
+export const isLang = (v: unknown): v is Lang => v === "en" || v === "ta";
 
 /** ListenMusic speaks English until the user picks another language in Settings. */
 function readLang(): Lang {

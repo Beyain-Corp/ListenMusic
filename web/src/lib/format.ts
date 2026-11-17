@@ -29,7 +29,7 @@ export function parseList(text: string, max = MAX_BATCH_TERMS): string[] {
     .split(/[,\n]+/)
     .map((s) => s.trim())
     .filter((s) => {
-      const key = s.toLocaleLowerCase("pt-BR");
+      const key = s.toLowerCase();
       if (!s || seen.has(key)) return false;
       seen.add(key);
       return true;
