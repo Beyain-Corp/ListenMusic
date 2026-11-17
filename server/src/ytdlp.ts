@@ -69,8 +69,8 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const cookieFile = getWritableCookiesFile();
     let extraArgs = [...config.ytdlpExtraArgs].map((a) => {
-      if (a.includes("player_client=tv_samsung") && !a.includes("web_embedded")) {
-        return a.replace("player_client=tv_samsung", "player_client=web_embedded,android,web,tv_samsung");
+      if (a.includes("player_client=tv_samsung")) {
+        return a.replace("player_client=tv_samsung", "player_client=web,web_embedded,android");
       }
       return a;
     });
@@ -95,9 +95,9 @@ async function run(args: string[], timeoutMs: number): Promise<string> {
 
     let defaultExtractorArgs: string[] = [];
     if (!hasPlayerClient && !hasSkip) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web_embedded,android,web,tv_samsung;skip=hls,dash"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web,web_embedded,android;skip=hls,dash"];
     } else if (!hasPlayerClient) {
-      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web_embedded,android,web,tv_samsung"];
+      defaultExtractorArgs = ["--extractor-args", "youtube:player_client=web,web_embedded,android"];
     } else if (!hasSkip) {
       defaultExtractorArgs = ["--extractor-args", "youtube:skip=hls,dash"];
     }
@@ -153,6 +153,7 @@ export function clearResolved() {
 
 const isAudioOnly = (f: RawFormat) => !!f.url && f.vcodec === "none" && !!f.acodec && f.acodec !== "none";
 const isMuxed = (f: RawFormat) => !!f.url && !!f.vcodec && f.vcodec !== "none" && !!f.acodec && f.acodec !== "none";
+const hasAudio = (f: RawFormat) => !!f.url && !!f.acodec && f.acodec !== "none";
 const isHttps = (f: RawFormat) => !f.protocol || f.protocol === "https";
 
 function toStream(f: RawFormat, kind: "audio" | "video"): StreamFormat {
@@ -168,11 +169,18 @@ function pickAudio(formats: RawFormat[]): RawFormat | undefined {
   const pool = ready.length > 0 ? ready : audio;
 
   // AAC in MP4 plays everywhere, including iOS Safari. Opus/WebM is the fallback.
-  return (
+  const bestAudio = (
     pool.find((f) => f.format_id === "140") ??
     pool.filter((f) => f.ext === "m4a").sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0] ??
     pool.sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0]
   );
+  if (bestAudio) return bestAudio;
+
+  // Fallback to muxed stream containing audio (e.g. format 18: 360p MP4 + AAC) when SABR hides audio-only URLs
+  const muxed = formats.filter((f) => hasAudio(f) && isHttps(f));
+  const readyMuxed = muxed.filter((f) => !f.available_at || f.available_at <= now);
+  const muxedPool = readyMuxed.length > 0 ? readyMuxed : muxed;
+  return muxedPool.find((f) => f.format_id === "18") ?? muxedPool.sort((a, b) => (b.abr ?? 0) - (a.abr ?? 0))[0];
 }
 
 function pickVideo(formats: RawFormat[]): RawFormat | undefined {
