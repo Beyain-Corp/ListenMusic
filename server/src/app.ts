@@ -85,8 +85,9 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
     extraArgs: config.ytdlpExtraArgs,
   }));
 
-  app.get("/api/benchmark", async () => {
+  app.get("/api/benchmark", async (req) => {
     const { ytdlp, env } = tools();
+    const { client = "android" } = (req.query ?? {}) as { client?: string };
     const results: Record<string, any> = {};
 
     const runCmd = (cmd: string, args: string[]) => {
@@ -103,10 +104,26 @@ export async function startServer(opts: StartOptions = {}): Promise<RunningServe
       });
     };
 
-    results.node = await runCmd("node", ["-e", "console.log(1)"]);
-    results.deno = await runCmd("deno", ["eval", "console.log(1)"]);
+    results.python3 = await runCmd("python3", ["--version"]);
+
     if (ytdlp) {
-      results.ytdlpVersion = await runCmd(ytdlp, ["--version"]);
+      const cookieFile = getWritableCookiesFile();
+      const cookieArgs = cookieFile ? ["--cookies", cookieFile] : [];
+      const testId = "I__jQrwsXt8";
+
+      const args = [
+        "-4",
+        ...cookieArgs,
+        "--extractor-args",
+        `youtube:player_client=${client};skip=hls,dash`,
+        "--cache-dir",
+        "/cache/yt-dlp",
+        "-f",
+        "18/ba/b",
+        "-g",
+        `https://www.youtube.com/watch?v=${testId}`,
+      ];
+      results[client] = await runCmd(ytdlp, args);
     }
     return results;
   });
